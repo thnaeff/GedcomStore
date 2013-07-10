@@ -1,6 +1,6 @@
 GedcomStore
 ==========
-<b>To parse a lineage-linked grammar file and build a valid GEDCOM-structure according to the parsed definitions</b>
+<b>To parse a <a href="http://homepages.rootsweb.ancestry.com/~pmcbride/gedcom/55gcch2.htm" target="parent">lineage-linked grammar file</a> and build a valid <a href="http://en.wikipedia.org/wiki/GEDCOM" target="parent">GEDCOM</a>-structure according to the parsed definitions</b>
 
 <p>
 GedcomStore is a library to parse lineage-linked grammar from a file. It then gives access to the parsed structures in order to create a valid GEDCOM ouput. Using the GedcomCreator class makes it even easier to create multiple structures like family or individual structures.<br>
@@ -112,6 +112,18 @@ Examples
 More examples can be found in src/ch/thn/gedcom/store/test/
 </p>
 
+
+Links to topics about GEDCOM
+-----------------------------
+<ul>
+<li><a href="http://www.daubnet.com/de/gedcom" target="parent">GEDCOM Documentation (auch in deutsch)</a></li>
+<li><a href="http://homepages.rootsweb.ancestry.com/~pmcbride/gedcom/55gctoc.htm" target="parent">The GEDCOM Standard Release 5.5</a></li>
+<li><a href="http://en.wikipedia.org/wiki/GEDCOM" target="parent"><b>GE</b>nealogical <b>D</b>ata <b>COM</b>munication on Wikipedia</a></li>
+<li><a href="http://www.phpgedview.net/ged551-5.pdf" target="parent">GEDCOM standard 5.5.1</a></li>
+<li><a href="http://heiner-eichmann.de/gedcom/gedcom.htm" target="parent">GEDCOM 5.5 Sample Page </a></li>
+<li><a href="http://www.geditcom.com/gedcom.html" target="parent">GEDCOM 5.5 Torture Test Files</a></li>
+<li><a href="http://www.tamurajones.net/genealogy.xhtml" target="parent">Genealogy infos, news and software</a></li>
+</ul>
 
 
 Not yet implemented
