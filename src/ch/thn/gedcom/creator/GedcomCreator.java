@@ -57,7 +57,7 @@ public class GedcomCreator {
 	
 	public boolean addNewStructure(Object id) {
 		
-		GedcomBlock newStructure = store.getGedcomBlock(structureName, GedcomBlock.COPY_MODE_MANDATORY);
+		GedcomBlock newStructure = store.getGedcomBlock(structureName, GedcomBlock.ADD_MANDATORY);
 		
 		if (newStructure == null) {
 			if (showDebugOutput) {

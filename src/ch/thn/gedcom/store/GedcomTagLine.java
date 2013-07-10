@@ -34,10 +34,10 @@ public class GedcomTagLine extends GedcomLine {
 		
 		if (storeLine.hasChildBlock()) {
 			//Copy mandatory or all lines if necessary
-			if (copyMode == GedcomBlock.COPY_MODE_MANDATORY && storeLine.getChildBlock().hasMandatoryLines()) {
+			if (copyMode == GedcomBlock.ADD_MANDATORY && storeLine.getChildBlock().hasMandatoryLines()) {
 				//Copy mandatory
 				setChildBlock(new GedcomBlock(storeLine.getChildBlock(), this, null, copyMode));
-			} else if (copyMode == GedcomBlock.COPY_MODE_ALL) {
+			} else if (copyMode == GedcomBlock.ADD_ALL) {
 				//Copy all
 				setChildBlock(new GedcomBlock(storeLine.getChildBlock(), this, null, copyMode));
 			} else {

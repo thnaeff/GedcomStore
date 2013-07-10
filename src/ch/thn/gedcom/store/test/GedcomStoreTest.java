@@ -5,6 +5,7 @@ package ch.thn.gedcom.store.test;
 
 
 import ch.thn.gedcom.store.GedcomBlock;
+import ch.thn.gedcom.store.GedcomLine;
 import ch.thn.gedcom.store.GedcomObject;
 import ch.thn.gedcom.store.GedcomPrinter;
 import ch.thn.gedcom.store.GedcomStore;
@@ -23,7 +24,7 @@ public class GedcomStoreTest {
 		GedcomStore store = new GedcomStore();
 		store.parse("/home/thomas/Projects/java/GedcomStore/gedcomobjects_5.5.1.txt");
 		
-		
+	
 		System.out.println("\n\n--------------------------------------\n");
 		
 //		System.out.println(GedcomPrinter.preparePrint(store, 0, true));
@@ -72,12 +73,17 @@ public class GedcomStoreTest {
 //		System.out.println(">>" + GedcomPrinter.preparePrint(b1, 0, true, true));	
 		
 		
-		GedcomBlock b1 = store.getGedcomBlock("INDIVIDUAL_RECORD", GedcomBlock.COPY_MODE_MANDATORY);
+		GedcomBlock b1 = store.getGedcomBlock("INDIVIDUAL_RECORD", GedcomBlock.ADD_MANDATORY);
 		System.out.println(GedcomPrinter.preparePrint(b1, 0, true, true));
 		
-		GedcomObject o1 = b1.followPath("INDI", "PERSONAL_NAME_STRUCTURE", "NAME");
-		System.out.println(GedcomPrinter.preparePrint(o1.getParentBlock(), 0, true, true));
+		GedcomLine line = b1.getChildLine("INDI").getBlock().addStructureLine("PERSONAL_NAME_STRUCTURE").getChildLine("NAME");
+		System.out.println("Line:\n" + GedcomPrinter.preparePrint(line));
+		System.out.println("Line:\n" + GedcomPrinter.preparePrint(line, 2, false, true));
 		
+		GedcomObject o1 = b1.followPath("INDI", "PERSONAL_NAME_STRUCTURE", "NAME");
+		System.out.println("Block:\n" + GedcomPrinter.preparePrint(o1.getParentBlock(), 0, true, true));
+		
+		System.out.println(GedcomPrinter.preparePrint(store, 2, true));
 	}
 
 }

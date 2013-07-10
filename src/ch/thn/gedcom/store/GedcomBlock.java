@@ -20,9 +20,12 @@ import java.util.LinkedList;
  */
 public class GedcomBlock extends GedcomObject {
 
-	public static final int COPY_MODE_ALL = 0;
-	public static final int COPY_MODE_MANDATORY = 1;
-	public static final int COPY_MODE_NONE = 2;
+	/** Create all the available lines automatically */
+	public static final int ADD_ALL = 0;
+	/** Only create mandatory lines automatically */
+	public static final int ADD_MANDATORY = 1;
+	/** Do not create any lines automatically */
+	public static final int ADD_NONE = 2;
 
 	/**
 	 * A list with all the lines of this block.
@@ -50,7 +53,7 @@ public class GedcomBlock extends GedcomObject {
 	private boolean initialLineCopy = true;
 	private boolean addUserLine = false;
 	
-	private int copyMode = COPY_MODE_MANDATORY;
+	private int copyMode = ADD_MANDATORY;
 	
 	
 	/**
@@ -99,10 +102,10 @@ public class GedcomBlock extends GedcomObject {
 		initialLineCopy = true;
 		
 		//Copy mandatory or all lines if necessary
-		if (copyMode == COPY_MODE_MANDATORY && storeBlock.hasMandatoryLines()) {
-			copyLines(storeBlock.getMandatoryLines(), tag, copyMode);
-		} else if (copyMode == COPY_MODE_ALL) {
-			copyLines(storeBlock.getStoreLines(), tag, copyMode);
+		if (copyMode == ADD_MANDATORY && storeBlock.hasMandatoryLines()) {
+			addInitialLines(storeBlock.getMandatoryLines(), tag, copyMode);
+		} else if (copyMode == ADD_ALL) {
+			addInitialLines(storeBlock.getStoreLines(), tag, copyMode);
 		}
 		
 		initialLineCopy = false;
@@ -116,7 +119,7 @@ public class GedcomBlock extends GedcomObject {
 	 * @param tag 
 	 * @param copyMode The mode which is passed on to each sub line instance
 	 */
-	private void copyLines(LinkedList<GedcomStoreLine> linesToCopy, String tag, int copyMode) {
+	private void addInitialLines(LinkedList<GedcomStoreLine> linesToCopy, String tag, int copyMode) {
 		
 		for (GedcomStoreLine storeLine : linesToCopy) {
 			//Get the structure line, or if its a tag line try to get the 
