@@ -1,9 +1,8 @@
-/* GEDCOM STANDARD */
-/* DRAFT Release 5.5.1 */
-/* http://www.phpgedview.net/ged551-5.pdf */
-/* With additional tags for the Gramps-software (http://gramps-project.org)*/
-/* Additional Tags: */
-/* EMAIL in INDIVIDUAL_RECORD */
+GRAMPS_DESCRIPTION=DRAFT Release 5.5.1
+For testing
+GRAMPS_SOURCE=http://www.phpgedview.net/ged551-5.pdf
+GRAMPS_VERSION=5.5.1
+
 
 
 HEADER:=
@@ -79,7 +78,6 @@ n @<XREF:INDI>@ INDI    {1:1}
   +1 <<NOTE_STRUCTURE>>    {0:M}
   +1 <<SOURCE_CITATION>>    {0:M}
   +1 <<MULTIMEDIA_LINK>>    {0:M}
-  +1 EMAIL <ADDRESS_MAIL>    {0:3}
 
 
 MULTIMEDIA_RECORD:=
@@ -473,7 +471,9 @@ SPOUSE_TO_FAMILY_LINK:=
 n FAMS @<XREF:FAM>@    {1:1}
   +1 <<NOTE_STRUCTURE>>    {0:M}
 
-  
+ 
 END_OF_FILE:=
 n TRLR    {1:1}
+
+  
 

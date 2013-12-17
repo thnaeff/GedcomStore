@@ -1,7 +1,6 @@
-/* GEDCOM STANDARD */
-/* Release 5.5 */
-/* http://homepages.rootsweb.ancestry.com/~pmcbride/gedcom/55gctoc.htm */
-
+GRAMPS_VERSION=5.5.1
+GRAMPS_SOURCE=http://homepages.rootsweb.ancestry.com/~pmcbride/gedcom/55gctoc.htm
+GRAMPS_DESCRIPTION=Release 5.5
 
 ADDRESS_STRUCTURE: =
 

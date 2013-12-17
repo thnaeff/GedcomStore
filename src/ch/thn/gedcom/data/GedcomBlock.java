@@ -1,11 +1,17 @@
 /**
  * 
  */
-package ch.thn.gedcom.store;
+package ch.thn.gedcom.data;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.List;
+
+import ch.thn.gedcom.GedcomFormatter;
+import ch.thn.gedcom.GedcomToString;
+import ch.thn.gedcom.store.GedcomStoreBlock;
+import ch.thn.gedcom.store.GedcomStoreLine;
 
 /**
  * A {@link GedcomBlock} is a container for all the lines of one level. Such a 
@@ -16,7 +22,7 @@ import java.util.LinkedList;
  * 
  * 
  * @author thomas
- *
+ * @see GedcomObject
  */
 public class GedcomBlock extends GedcomObject {
 
@@ -49,10 +55,6 @@ public class GedcomBlock extends GedcomObject {
 	 */
 	private GedcomLine parentLine = null;
 		
-	private boolean showAccessOutput = true;
-	private boolean initialLineCopy = true;
-	private boolean addUserLine = false;
-	
 	private int copyMode = ADD_MANDATORY;
 	
 	
@@ -78,10 +80,7 @@ public class GedcomBlock extends GedcomObject {
 		
 		lines = new LinkedList<GedcomLine>();
 		idToLineLinks = new LinkedHashMap<String, LinkedList<GedcomLine>>();
-		
-		showAccessOutput = storeBlock.getStoreStructure().getStore().showAccessOutput();
-		
-		initialLineCopy = false;
+				
 	}
 	
 	/**
@@ -99,8 +98,6 @@ public class GedcomBlock extends GedcomObject {
 	public GedcomBlock(GedcomStoreBlock storeBlock, GedcomLine parentLine, String tag, int copyMode) {
 		this(storeBlock, parentLine, copyMode);
 		
-		initialLineCopy = true;
-		
 		//Copy mandatory or all lines if necessary
 		if (copyMode == ADD_MANDATORY && storeBlock.hasMandatoryLines()) {
 			addInitialLines(storeBlock.getMandatoryLines(), tag, copyMode);
@@ -108,7 +105,6 @@ public class GedcomBlock extends GedcomObject {
 			addInitialLines(storeBlock.getStoreLines(), tag, copyMode);
 		}
 		
-		initialLineCopy = false;
 	}
 	
 	/**
@@ -127,20 +123,27 @@ public class GedcomBlock extends GedcomObject {
 			//is more than one tag possible, null is returned since it can 
 			//not be copied.
 			GedcomLine line = null;
-			if (storeLine.hasMultipleTagNames()) {
-				line = storeLine.getLineInstance(this, tag, copyMode);
-			} else {
-				line = storeLine.getLineInstance(this, copyMode);
-			}
 			
-			if (line != null) {
-				addLine(line);
-			} else {
-				System.out.println("[INFO] Can not automatically copy line " + storeLine.getId() + " in " + parentLine.getId() + ". " +
-						"Line has multiple tag possibilities.");
+			try {
+				if (storeLine.hasMultipleTagNames()) {
+					line = storeLine.getLineInstance(this, tag, copyMode);
+				} else {
+					line = storeLine.getLineInstance(this, copyMode);
+				}
+				
+				if (line != null) {
+					addLine(line);
+				}
+			} catch (GedcomCreationError e) {
+				if (!(e instanceof GedcomCreationError2)) {
+					throw new GedcomCreationError2("Failed to automatically create line " + storeLine.getId() + ". " + e.getMessage());
+				} else {
+					throw e;
+				}
 			}
 			
 		}
+		
 	}
 	
 	/**
@@ -152,22 +155,19 @@ public class GedcomBlock extends GedcomObject {
 	 * reached.
 	 */
 	private boolean addLine(GedcomLine line) {
-		
 		if (line.getStoreLine().getMax() != 0 
 				&& idToLineLinks.containsKey(line.getId()) 
 				&& line.getStoreLine().getMax() <= idToLineLinks.get(line.getId()).size()) {
 			
-			String lineId = " to ";
+			String lineIdString = " to ";
 			
 			if (parentLine != null) {
-				lineId = " to " + parentLine.getId() + " in ";
+				lineIdString = " to " + parentLine.getId() + " in ";
 			}
 			
-			System.out.println("[ERROR] Can not add another line " + line.getId()  
-					+ lineId + getStoreBlock().getStoreStructure().getStructureName() 
+			throw new GedcomCreationError("Can not add another line " + line.getId()  
+					+ lineIdString + getStoreBlock().getStoreStructure().getStructureName() 
 					+ ". Maximum of " + line.getStoreLine().getMax() + " lines reached.");
-			
-			return false;
 		}
 		
 		int index = lines.size();
@@ -191,16 +191,16 @@ public class GedcomBlock extends GedcomObject {
 		
 		//Add line
 		lines.add(index, line);
-		
+
 		//Link ID to line
 		String id = null;
 		
-		if (line instanceof GedcomTagLine) {
-			GedcomTagLine tagLine = (GedcomTagLine)line;
+		if (line.isTagLine()) {
+			GedcomTagLine tagLine = line.getAsTagLine();
 			
 			id = tagLine.getTag();
 		} else {
-			GedcomStructureLine structureLine = (GedcomStructureLine)line;
+			GedcomStructureLine structureLine = line.getAsStructureLine();
 			id = structureLine.getStoreLine().getStructureName();
 			
 			String tag = structureLine.getStructureVariationTag();
@@ -216,19 +216,6 @@ public class GedcomBlock extends GedcomObject {
 		
 		idToLineLinks.get(id).add(line);
 		
-		
-		if (showAccessOutput) {
-			//Print the lines if either the head of the structure is reached
-			//or if the block is reached which has been added by the user
-			if (line.getLevel() == 0 || addUserLine) {
-				addUserLine = false;
-				
-				//The structure has been added. Now show all added lines
-				printLines(lines);
-			}
-			
-		}
-		
 		return true;
 	}
 	
@@ -242,10 +229,10 @@ public class GedcomBlock extends GedcomObject {
 	 * this parameter to true looks for a variation with an XRef field
 	 * @param withValue If it is a structure name with multiple variations, setting 
 	 * this parameter to true looks for a variation with an value field
-	 * @return The added line if adding was successful, or null if not.
+	 * @return The added line if adding was successful, or null if not (because the 
+	 * line does not exist).
 	 */
 	private GedcomLine addUserLine(String tagOrStructureName, String tag, boolean withXRef, boolean withValue) {
-		addUserLine = true;
 		
 		if (storeBlock.hasStoreLine(tagOrStructureName)) {
 			GedcomStoreLine storeLine = storeBlock.getStoreLine(tagOrStructureName);
@@ -274,6 +261,10 @@ public class GedcomBlock extends GedcomObject {
 			
 			addLine(line);
 			
+			if (showAccessOutput()) {
+				printAllAddedLines(line);
+			}
+			
 			return line;
 		} else {
 			String lineId = " to ";
@@ -282,59 +273,81 @@ public class GedcomBlock extends GedcomObject {
 				lineId = " to " + parentLine.getId() + " in ";
 			}
 						
-			System.out.println("[ERROR] Can not add line " + tagOrStructureName  
+			throw new GedcomCreationError("Can not add line " + tagOrStructureName  
 					+ lineId + getStoreBlock().getStoreStructure().getStructureName() 
 					+ ". Line does not exist.");
 			
 		}
 		
-		return null;
 	}
 	
+	/**
+	 * 
+	 * 
+	 * @param line
+	 * @param initialLineCopy
+	 */
+	private static void printAllAddedLines(GedcomLine line) {
+		printInfoOutput(line, false, false);
+		//All following lines must have been added as initial lines when the 
+		//object was created
+		printAllAddedLines(line.getChildBlock(), true);
+	}
 	
 	/**
-	 * Just prints the lines in the given list and their sub lines, marked with a "*" 
-	 * for automatically added lines and marked with a "+" for manually added lines.
 	 * 
-	 * @param lines
+	 * 
+	 * @param block
 	 */
-	private void printLines(LinkedList<GedcomLine> lines) {
+	private static void printAllAddedLines(GedcomBlock block, boolean initialLineCopy) {
+		if (block == null) {
+			return;
+		}
+		
+		for (GedcomLine l : block.getLines()) {
+			printInfoOutput(l, false, initialLineCopy);
+			printAllAddedLines(l.getChildBlock(), initialLineCopy);
+		}
+	}
+	
+	/**
+	 * 
+	 * 
+	 * @param line
+	 * @param access
+	 * @param initialLineCopy
+	 */
+	private static void printInfoOutput(GedcomLine line, boolean access, boolean initialLineCopy) {
 		String structureInfo = null;
 		String prefix = null;
 		
-		for (GedcomLine l : lines) {
+		if (line.isStructureLine()) {
+			String tag = line.getAsStructureLine().getStructureVariationTag();
 			
-			if (l instanceof GedcomStructureLine) {
-				String tag = ((GedcomStructureLine)l).getStructureVariationTag();
-				
-				//Add tag name to the end of the line if available
-				if (tag != null) {
-					structureInfo = " (" + tag + ")";
-				} else {
-					structureInfo = "";
-				}
-				
-				prefix = "";
+			//Add tag name to the end of the line if available
+			if (tag != null) {
+				structureInfo = " (" + tag + ")";
 			} else {
 				structureInfo = "";
-				
-				if (initialLineCopy) {
-					prefix = "* ";
-				} else {
-					prefix = "+ ";
-				}
 			}
 			
-			if (showAccessOutput) {
-				System.out.println(GedcomFormatter.makeInset(l.getLevel()) + prefix + l.getId() + structureInfo);
-			}
-			
-			//Print any child lines if available
-			if (l.hasChildLines()) {
-				printLines(l.getBlock().getLines());
-			}
-			
+			prefix = "";
+		} else {
+			structureInfo = "";
 		}
+		
+		if (access) {
+			prefix = "> ";
+		} else {
+			if (initialLineCopy) {
+				prefix = "* ";
+			} else {
+				prefix = "+ ";
+			}
+		}
+		
+		System.out.println(GedcomFormatter.makeInset(line.getLevel()) + prefix + 
+				line.getId() + structureInfo);
 	}
 	
 	/**
@@ -342,7 +355,7 @@ public class GedcomBlock extends GedcomObject {
 	 * possibilities of this {@link GedcomBlock}
 	 * @return
 	 */
-	protected GedcomStoreBlock getStoreBlock() {
+	public GedcomStoreBlock getStoreBlock() {
 		return storeBlock;
 	}
 	
@@ -351,7 +364,7 @@ public class GedcomBlock extends GedcomObject {
 	 * 
 	 * @return
 	 */
-	protected LinkedList<GedcomLine> getLines() {
+	public LinkedList<GedcomLine> getLines() {
 		return lines;
 	}
 	
@@ -360,7 +373,7 @@ public class GedcomBlock extends GedcomObject {
 	 * 
 	 * @return
 	 */
-	protected LinkedList<String> getAvailableLines() {
+	protected LinkedList<String> getLineIds() {
 		return new LinkedList<String>(idToLineLinks.keySet());
 	}
 	
@@ -375,7 +388,8 @@ public class GedcomBlock extends GedcomObject {
 	 */
 	public GedcomTagLine addTagLine(String tag) {
 		if (!nameIsPossibleTag(tag)) {
-			return null;
+			throw new GedcomCreationError(tag + " is not a possible tag name. Possible tag names are: " + 
+					GedcomFormatter.makeOrList(getFollowingBlock().getStoreBlock().getAllLineIDs(), "", ""));
 		}
 		return (GedcomTagLine)addUserLine(tag, tag, false, false);
 	}
@@ -388,7 +402,7 @@ public class GedcomBlock extends GedcomObject {
 	 */
 	public GedcomStructureLine addStructureLine(String structureName) {
 		if (!nameIsPossibleStructure(structureName)) {
-			return null;
+			throw new GedcomCreationError(structureName + " is not a structure name");
 		}
 		return (GedcomStructureLine)addUserLine(structureName, null, false, false);
 	}
@@ -404,7 +418,7 @@ public class GedcomBlock extends GedcomObject {
 	 */
 	public GedcomStructureLine addStructureLine(String structureName, String tag) {
 		if (!nameIsPossibleStructure(structureName)) {
-			return null;
+			throw new GedcomCreationError(structureName + " is not a structure name");
 		}
 		return (GedcomStructureLine)addUserLine(structureName, tag, false, false);
 	}
@@ -424,20 +438,31 @@ public class GedcomBlock extends GedcomObject {
 	 */
 	public GedcomStructureLine addStructureLine(String structureName, String tag, boolean withXRef, boolean withValue) {
 		if (!nameIsPossibleStructure(structureName)) {
-			return null;
+			throw new GedcomCreationError(structureName + " is not a structure name");
 		}
 		return (GedcomStructureLine)addUserLine(structureName, tag, withXRef, withValue);
 	}
 	
+	
+	@Override
+	public boolean isBlock() {
+		return true;
+	}
+	
+	@Override
+	public GedcomBlock getAsBlock() {
+		return this;
+	}
+	
+	
 	@Override
 	public GedcomBlock getParentBlock() {
 		if (parentLine.getParentBlock() != null) {
-			if (showAccessOutput) {
+			if (showAccessOutput()) {
 				System.out.println(GedcomFormatter.makeInset(parentLine.getParentBlock().getLevel()) + "< ");
 			}
 		} else {
-			System.out.println("[ERROR] There is no parent block for " + this);
-			return null;
+			throw new GedcomAccessError("There is no parent block for " + this);
 		}
 		
 		return parentLine.getParentBlock();
@@ -476,39 +501,46 @@ public class GedcomBlock extends GedcomObject {
 		}
 		
 		if (!idToLineLinks.containsKey(name)) {
-			if (showAccessOutput) {
-				System.out.println("[WARNING] No line " + name + " available to go to. " +
-						"Available lines(s): " + GedcomFormatter.makeOrList(new LinkedList<String>(getAvailableLines()), "", ""));
-			}
-			return null;
+			throw new GedcomAccessError("No line " + name + " added to this " + 
+					parentLine.getId() + " block. " + "Available lines(s): " + 
+					GedcomFormatter.makeOrList(new LinkedList<String>(getLineIds()), "", ""));
 		}
 		
 		if (idToLineLinks.get(name).size() <= lineNumber || lineNumber < 0) {
-			if (showAccessOutput) {
-				System.out.println("[ERROR] Line " + name + " number " + lineNumber + 
+			throw new GedcomAccessError("Line " + name + " number " + lineNumber + 
 						" does not exist. There are only " + idToLineLinks.get(name).size() + 
-						" lines available (the line index of the first line is 0).");
-			}
-			return null;
+						" lines available (the first line starting at index 0).");
 		}
 		
 		GedcomLine line = idToLineLinks.get(name).get(lineNumber);
 		
-		if (showAccessOutput) {
-			System.out.println(GedcomFormatter.makeInset(line.getLevel()) + "> " + name);
+		if (showAccessOutput()) {
+			printInfoOutput(line, true, false);
 		}
 		
 		return line;
-		
 	}
 	
-	
+	/**
+	 * Checks if this block has a line with the given tag name 
+	 * and if that line has the given value set
+	 * 
+	 * @param tagName
+	 * @param value
+	 * @return
+	 */
 	public boolean hasLineWithValue(String tagName, String value) {
+		if (!idToLineLinks.containsKey(tagName)) {
+			return false;
+		}
+		
 		int numberOfLines = getNumberOfLines(tagName);
 		
 		for (int i = 0; i < numberOfLines; i++) {
 			GedcomLine line = idToLineLinks.get(tagName).get(i);
-			if (line instanceof GedcomTagLine && ((GedcomTagLine)line).getValue().equals(value)) {
+			if (line.isTagLine() 
+					&& line.getAsTagLine().getValue() != null
+					&& line.getAsTagLine().getValue().equals(value)) {
 				return true;
 			}
 		}
@@ -516,12 +548,26 @@ public class GedcomBlock extends GedcomObject {
 		return false;
 	}
 	
+	/**
+	 * Checks if this block has a line with the given tag name 
+	 * and if that line has the given xref set
+	 * 
+	 * @param tagName
+	 * @param xref
+	 * @return
+	 */
 	public boolean hasLineWithXRef(String tagName, String xref) {
+		if (!idToLineLinks.containsKey(tagName)) {
+			return false;
+		}
+		
 		int numberOfLines = getNumberOfLines(tagName);
 		
 		for (int i = 0; i < numberOfLines; i++) {
 			GedcomLine line = idToLineLinks.get(tagName).get(i);
-			if (line instanceof GedcomTagLine && ((GedcomTagLine)line).getXRef().equals(xref)) {
+			if (line.isTagLine() 
+					&& line.getAsTagLine().getXRef() != null 
+					&& line.getAsTagLine().getXRef().equals(xref)) {
 				return true;
 			}
 		}
@@ -542,6 +588,14 @@ public class GedcomBlock extends GedcomObject {
 		return storeBlock.hasStoreLine(tagOrStructureName);
 	}
 	
+	@Override
+	public String getId() {
+		if (parentLine == null || parentLine.getParentBlock() == null) {
+			return getStoreBlock().getStoreStructure().getStructureName();
+		}
+	
+		return parentLine.getId();
+	}
 	
 	/**
 	 * Returns the level of this block. The level is defined in the lineage-linked 
@@ -549,12 +603,13 @@ public class GedcomBlock extends GedcomObject {
 	 * 
 	 * @return
 	 */
+	@Override
 	public int getLevel() {
 		if (parentLine == null || parentLine.getParentBlock() == null) {
 			return 0;
 		}
 		
-		if (parentLine instanceof GedcomStructureLine) {
+		if (parentLine.isStructureLine()) {
 			//If the current block is a block of a structure line, do not consider 
 			//the structure line when calculating the level.
 			return parentLine.getParentBlock().getParentLine().getParentBlock().getLevel() + 1;
@@ -564,36 +619,19 @@ public class GedcomBlock extends GedcomObject {
 	}
 	
 	/**
-	 * Resets all the data or all lines in this block, and of all sub lines
+	 * Resets all the data of all lines in this block, and of all sub lines if 
+	 * selected.
+	 * 
+	 * @param clearSubLines
 	 */
-	public void clear() {
+	public void clear(boolean clearSubLines) {
 		for (GedcomLine line : lines) {
 			line.clear();
-			line.getBlock().clear();
+			
+			if (clearSubLines) {
+				line.getChildBlock().clear(clearSubLines);
+			}
 		}
-	}
-	
-	
-	/**
-	 * Defines if there should be a console output when navigating through the 
-	 * structures by using methods line goToParent, setValue, goToChildBlock etc. 
-	 * Showing this output can simplify the construction of correct gedcom structures.
-	 * 
-	 * @return
-	 */
-	public boolean showAccessOutput() {
-		return showAccessOutput;
-	}
-	
-	/**
-	 * Defines if there should be a console output when navigating through the 
-	 * structures by using methods line goToParent, setValue, goToChildBlock etc. 
-	 * Showing this output can simplify the construction of correct gedcom structures.
-	 * 
-	 * @param show 
-	 */
-	public void showAccessOutput(boolean show) {
-		this.showAccessOutput = show;
 	}
 	
 	/**
@@ -617,8 +655,9 @@ public class GedcomBlock extends GedcomObject {
 	}
 	
 	/**
-	 * Returns the current number of lines with the given structure name 
-	 * and variation in this block
+	 * Returns the current number of lines in this block which have the given 
+	 * structure name and variation. If <code>tag=null</code> it behaves 
+	 * like {@link #getNumberOfLines(String)}.
 	 * 
 	 * @param structureName
 	 * @param tag
@@ -681,9 +720,46 @@ public class GedcomBlock extends GedcomObject {
 		return (maxNumberOfLines(structureName) >= getNumberOfLines(structureName, tag));
 	}
 	
+	/**
+	 * Returns a list of all the child lines which have the given tag or 
+	 * structure name
+	 * 
+	 * @param tagOrStructureName
+	 * @return
+	 */
+	public List<GedcomLine> getChildLines(String tagOrStructureName) {
+		return getChildLines(tagOrStructureName, null);
+	}
+	
+	/**
+	 * Returns a list of all the child lines which have the given structure name 
+	 * and structure variation
+	 * 
+	 * @param structureName The structure name
+	 * @param tag The tag name to specify the structure variation
+	 * @return
+	 */
+	public List<GedcomLine> getChildLines(String structureName, String tag) {
+		
+		String name = structureName;
+		
+		if (tag != null) {
+			name = structureName + "-" + tag;
+		}
+		
+		if (!idToLineLinks.containsKey(name)) {
+			throw new GedcomAccessError("No line " + name + " added to this " + 
+					getId() + " block. " + "Available lines(s): " + 
+					GedcomFormatter.makeOrList(new LinkedList<String>(getLineIds()), "", ""));
+		}
+		
+		return idToLineLinks.get(name);
+	}
+	
+	
 	@Override
 	public String toString() {
-		StringBuffer sb = GedcomPrinter.preparePrint(this, 1, false, true);
+		StringBuffer sb = GedcomToString.preparePrint(this, 1, false, true, true);
 		
 		if (sb.length() == 0) {
 			sb.append("Empty block");
@@ -694,12 +770,12 @@ public class GedcomBlock extends GedcomObject {
 
 	
 	@Override
-	protected GedcomBlock getStartBlock() {
+	public GedcomBlock getStartBlock() {
 		return this;
 	}
 	
 	@Override
-	protected GedcomBlock getFollowingBlock() {
+	public GedcomBlock getFollowingBlock() {
 		return this;
 	}
 

@@ -4,29 +4,45 @@
 package ch.thn.gedcom.store;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 
+import ch.thn.gedcom.GedcomHelper;
+import ch.thn.gedcom.GedcomToString;
+import ch.thn.gedcom.data.GedcomBlock;
+import ch.thn.gedcom.data.GedcomLine;
+import ch.thn.util.StringUtil;
+
 /**
+ * A store block contains all the lines of the same level. Furthermore, it has a 
+ * list of mandatory lines and a list which links all the line ID's (tag or structure 
+ * names) to their line objects. Each block also links back to its parent line 
+ * and to the structure it is located in.<br>
+ * <br>
+ * The class {@link GedcomStoreStructure} has more information about the hierarchy 
+ * of structures, blocks and lines.
+ * 
  * @author thomas
  *
  */
 public class GedcomStoreBlock {
 	
 	/**
-	 * All the lines of this block which are defined in the lineage-linked grammar.
+	 * All the lines of this block which are defined in the lineage-linked grammar 
+	 * in their parsing order.
 	 */
 	private LinkedList<GedcomStoreLine> storeLines = null;
 	
 	/**
-	 * A sublist of the storeLines which only contains the mandatory lines.
+	 * A sublist of the {@link #storeLines} which only contains the mandatory lines.
 	 */
 	private LinkedList<GedcomStoreLine> mandatoryLines = null;
 	
 	/**
 	 * The line ID's (tag or structure names) linked to their lines. If a line 
-	 * has multiple tag possibilities, the line appears multiple times, once for 
-	 * every tag.
+	 * has multiple tag possibilities (like [ANUL|CENS|DIV|DIVF]), the line appears 
+	 * multiple times, once for every tag.
 	 */
 	private HashMap<String, GedcomStoreLine> idToLineLinks = null;
 	
@@ -36,18 +52,20 @@ public class GedcomStoreBlock {
 	private GedcomStoreStructure storeStructure = null;
 	
 	/**
-	 * The line of which this block is located under
+	 * The line which this block is located under.
 	 */
 	private GedcomStoreLine parentStoreLine = null;
 	
 		
 	/**
-	 * 
+	 * Creates a new gedcom store block in the given store structure. 
 	 * 
 	 * @param storeStructrue
+	 * @param parentStoreLine
 	 */
-	public GedcomStoreBlock(GedcomStoreStructure storeStructrue) {
+	public GedcomStoreBlock(GedcomStoreStructure storeStructrue, GedcomStoreLine parentStoreLine) {
 		this.storeStructure = storeStructrue;
+		this.parentStoreLine = parentStoreLine;
 		
 		storeLines = new LinkedList<GedcomStoreLine>();
 		mandatoryLines = new LinkedList<GedcomStoreLine>();
@@ -55,31 +73,39 @@ public class GedcomStoreBlock {
 		
 	}
 	
-	
-	protected void setParentStoreLine(GedcomStoreLine parentStoreLine) {
-		this.parentStoreLine = parentStoreLine;
-	}
-	
-	
-	protected boolean parse(LinkedList<String> block) {
+	/**
+	 * Parses the given block with all the lines
+	 * 
+	 * @param block
+	 * @return
+	 * @throws GedcomParseException
+	 */
+	protected boolean parse(LinkedList<String> block) throws GedcomParseException {
 		/* Example:
 		 * n TAG something
 		 *   +1 TAG something
 		 *   +1 TAG something
+		 *   
 		 * n [TAG1 | TAG2] something
+		 * 
 		 * n <<STRUCTURE_NAME>>
+		 * 
 		 * ...
 		 */
 
 		if (block.size() == 0) {
+			//Nothing to do -> just continue
 			return true;
 		}
 		
-		String lineIndex = block.get(0).substring(0, block.get(0).indexOf(" "));
-		
+		//Gets the line index which is at the very beginning of a line
 		//The line index is either "n" or "+NUMBER", where NUMBER is 0-99
-		if (lineIndex.length() < 1 || lineIndex.length() > 3) {
-			return false;
+		String lineIndex = StringUtil.getMatchingFirst(GedcomHelper.levelPattern, block.get(0));
+		
+		if (lineIndex == null) {
+			//This error should already be captured by GedcomStore.parsingErrorCheck
+			throw new GedcomParseException("On line '" + block.get(0) + "'. The format of the line index is not valid. " +
+					"A index can either be 'n' or '+' followed by a number 1-99.");
 		}
 		
 		LinkedList<String> subBlock = new LinkedList<String>();
@@ -88,9 +114,10 @@ public class GedcomStoreBlock {
 		for (String line : block) {
 			
 			if (line.startsWith(lineIndex)) {
-				//It is a line for this block
+				//It is a line for this block on the same level
 				
-				//If there are sub block lines, process the sub block first
+				//If there are sub block lines (lines with a higher level), 
+				//process them first
 				if (subBlock.size() > 0) {
 					if (!parseSubBlock(subBlock, lastStoreLine)) {
 						return false;
@@ -98,7 +125,6 @@ public class GedcomStoreBlock {
 				}
 				
 				GedcomStoreLine storeLine = new GedcomStoreLine(this);
-				storeLine.setPos(storeLines.size());
 				storeLine.parse(line);
 				addLine(storeLine);
 				
@@ -121,10 +147,16 @@ public class GedcomStoreBlock {
 		return true;
 	}
 	
-	
-	private boolean parseSubBlock(LinkedList<String> subBlock, GedcomStoreLine lastStoreLine) {
-		GedcomStoreBlock storeSubBlock = new GedcomStoreBlock(storeStructure);
-		storeSubBlock.setParentStoreLine(lastStoreLine);
+	/**
+	 * Process a sub block
+	 * 
+	 * @param subBlock
+	 * @param lastStoreLine
+	 * @return
+	 * @throws GedcomParseException
+	 */
+	private boolean parseSubBlock(LinkedList<String> subBlock, GedcomStoreLine lastStoreLine) throws GedcomParseException {
+		GedcomStoreBlock storeSubBlock = new GedcomStoreBlock(storeStructure, lastStoreLine);
 		
 		if (!storeSubBlock.parse(subBlock)) {
 			return false;
@@ -132,12 +164,17 @@ public class GedcomStoreBlock {
 		
 		subBlock.clear();
 		
+		//Add the new sub block as a child to its parent line
 		lastStoreLine.setChildBlock(storeSubBlock);
 		
 		return true;
 	}
 	
-	
+	/**
+	 * Adds a new store line to this block
+	 * 
+	 * @param newLine
+	 */
 	private void addLine(GedcomStoreLine newLine) {
 		storeLines.add(newLine);
 		
@@ -154,7 +191,7 @@ public class GedcomStoreBlock {
 		} else {
 			//Link each tag to the new line
 			
-			LinkedList<String> allTags = newLine.getTagNames();
+			HashSet<String> allTags = newLine.getTagNames();
 			
 			for (String tag : allTags) {				
 				idToLineLinks.put(tag, newLine);
@@ -163,32 +200,68 @@ public class GedcomStoreBlock {
 		
 	}
 	
-	protected GedcomStoreLine getStoreLine(String tagOrStructureName) {
+	/**
+	 * Returns the line from this block which has the given tag or structure name
+	 * 
+	 * @param tagOrStructureName
+	 * @return
+	 */
+	public GedcomStoreLine getStoreLine(String tagOrStructureName) {
 		return idToLineLinks.get(tagOrStructureName);
 	}
 	
-	protected LinkedList<GedcomStoreLine> getStoreLines() {
+	/**
+	 * Returns a list of all the store lines which are in this store block
+	 * 
+	 * @return
+	 */
+	public LinkedList<GedcomStoreLine> getStoreLines() {
 		return storeLines;
 	}
 	
-	protected GedcomStoreStructure getStoreStructure() {
+	/**
+	 * Returns the structure in which this store block is in
+	 * 
+	 * @return
+	 */
+	public GedcomStoreStructure getStoreStructure() {
 		return storeStructure;
 	}
 	
-	protected LinkedList<String> getAllLineIDs() {
+	/**
+	 * Returns the line ID's (tag or structure names) of all the lines in this store block
+	 * 
+	 * @return
+	 */
+	public LinkedList<String> getAllLineIDs() {
 		return new LinkedList<String>(idToLineLinks.keySet());
 	}
 	
-	protected GedcomStoreLine getParentStoreLine() {
+	/**
+	 * Returns the store line which is the parent of this block
+	 * 
+	 * @return
+	 */
+	public GedcomStoreLine getParentStoreLine() {
 		return parentStoreLine;
 	}
 	
-	protected LinkedList<GedcomStoreLine> getMandatoryLines() {
+	/**
+	 * Returns a list of all the mandatory lines in this block
+	 * 
+	 * @return
+	 */
+	public LinkedList<GedcomStoreLine> getMandatoryLines() {
 		return mandatoryLines;
 	}
 	
 	
-		
+	/**
+	 * Returns the level of this block. The level of this block is one higher 
+	 * than the parent line of this block.
+	 * 
+	 * @return
+	 */
 	public int getLevel() {
 		if (parentStoreLine == null) {
 			return 0;
@@ -197,14 +270,35 @@ public class GedcomStoreBlock {
 		return parentStoreLine.getLevel() + 1;
 	}
 	
+	/**
+	 * Returns a new {@link GedcomBlock} instance with the configuration which has 
+	 * been parsed for this {@link GedcomStoreBlock}
+	 * 
+	 * @param parentLine
+	 * @param tag
+	 * @param copyMode
+	 * @return
+	 */
 	public GedcomBlock getBlockInstance(GedcomLine parentLine, String tag, int copyMode) {
 		return new GedcomBlock(this, parentLine, tag, copyMode);
 	}
 	
+	/**
+	 * Returns <code>true</code> if this block has one or more mandatory lines
+	 * 
+	 * @return
+	 */
 	public boolean hasMandatoryLines() {
 		return (mandatoryLines.size() > 0);
 	}
 	
+	/**
+	 * Returns <code>true</code> if this block has a line with the given line 
+	 * ID (tag or structure name).
+	 * 
+	 * @param lineId
+	 * @return
+	 */
 	public boolean hasStoreLine(String lineId) {
 		return idToLineLinks.containsKey(lineId);
 	}
@@ -212,7 +306,7 @@ public class GedcomStoreBlock {
 	
 	@Override
 	public String toString() {
-		return GedcomPrinter.preparePrint(this, 1, false).toString();
+		return GedcomToString.preparePrint(this, 1, false).toString();
 	}
 
 }

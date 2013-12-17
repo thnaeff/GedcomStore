@@ -1,14 +1,14 @@
 /**
  * 
  */
-package ch.thn.gedcom.store;
+package ch.thn.gedcom;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.LinkedList;
 
 /**
  * This class contains some static methods which help with formatting data to be used 
@@ -19,8 +19,7 @@ import java.util.LinkedList;
  */
 public class GedcomFormatter {
 	
-	
-	
+	public static final String INSET = "  ";
 	
 	private static final SimpleDateFormat gedcomDate = new SimpleDateFormat("dd MMM yyyy");
 	private static final SimpleDateFormat gedcomTime = new SimpleDateFormat("HH:mm:ss");
@@ -57,7 +56,7 @@ public class GedcomFormatter {
 	 * Returns the given date in the format needed for gedcom files.
 	 * 
 	 * @param d
-	 * @return
+	 * @return The date as string, or <code>null</code> if <code>d=null</code>
 	 */
 	public static String getDate(Date d) {
 		if (d == null) {
@@ -72,7 +71,7 @@ public class GedcomFormatter {
 	 * Returns the given time in the format needed for gedcom files.
 	 * 
 	 * @param d
-	 * @return
+	 * @return The time as string, or <code>null</code> if <code>d=null</code>
 	 */
 	public static String getTime(Date d) {
 		if (d == null) {
@@ -84,15 +83,47 @@ public class GedcomFormatter {
 	}
 	
 		
-	
+	/**
+	 * Converts the given date string to a date string needed for GEDCOM files. 
+	 * The date patterns given with dateFormatPatterns are used in the given order 
+	 * to parse the date string.
+	 * 
+	 * @param dateString
+	 * @param dateFormatPatterns
+	 * @return
+	 */
 	public static String getDate(String dateString, String... dateFormatPatterns) {
 		return getDate(extractDate(dateString, dateFormatPatterns));
 	}
 	
+	/**
+	 * Converts the given date string to a time string needed for GEDCOM files. 
+	 * The date patterns given with dateFormatPatterns are used in the given order 
+	 * to parse the date string.
+	 * 
+	 * @param dateString
+	 * @param dateFormatPatterns
+	 * @return
+	 */
 	public static String getTime(String dateString, String... dateFormatPatterns) {
 		return getTime(extractDate(dateString, dateFormatPatterns));
 	}
 	
+	/**
+	 * Returns the Date object from the given dateString. Since dates line "00 00 1995" 
+	 * would fail to parse by just usint the pattern "dd MMM yyyy", it tries the 
+	 * following patterns in the given order:<br>
+	 * 1. "dd MMM yyyy"<br>
+	 * 2. "MMM yyyy"<br>
+	 * 3. "yyyy"
+	 * <br>
+	 * Note: The missing pieces are set to 01 (first day and first month). Thus, the 
+	 * input date string "00 00 1995" would produce a date object "01 01 1995". This 
+	 * is just how {@link Date} works.
+	 * 
+	 * @param dateString
+	 * @return
+	 */
 	public static Date getDate(String dateString) {
 		if (dateString == null) {
 			return null;
@@ -102,6 +133,12 @@ public class GedcomFormatter {
 		
 	}
 	
+	/**
+	 * Converts the given time string to a date object
+	 * 
+	 * @param timeString
+	 * @return
+	 */
 	public static Date getTime(String timeString) {
 		if (timeString == null) {
 			return null;
@@ -116,6 +153,10 @@ public class GedcomFormatter {
 	}
 	
 	/**
+	 * Tries to parse the given date string with the given dateFormatPatterns. The 
+	 * order of trying is exactly the order of the patterns given with dateFormatPatterns. 
+	 * The first pattern which works to parse the date string returns its {@link Date} object. 
+	 * If none of the patterns work, null is returned.
 	 * 
 	 * @param dateString
 	 * @param dateFormatPatterns One or more date formats as used in {@link SimpleDateFormat}
@@ -147,7 +188,15 @@ public class GedcomFormatter {
 		
 	}
 	
-	
+	/**
+	 * Prints the given value (with prefix and postfix if given), but only if the 
+	 * given value is not null. If the given value is null, an empty string is returned.
+	 * 
+	 * @param prefix
+	 * @param valueToPrintIfNotNull
+	 * @param postfix
+	 * @return
+	 */
 	public static String printIfNotNull(String prefix, String valueToPrintIfNotNull, String postfix) {
 		if (valueToPrintIfNotNull == null) {
 			return "";
@@ -158,16 +207,16 @@ public class GedcomFormatter {
 	
 	
 	/**
-	 * Creates the necessary insets to show a structured form of this block
+	 * Creates a string with the number of spaces defined with the parameter insets
 	 * 
 	 * @param inset
 	 * @return
 	 */
-	protected static StringBuffer makeInset(int inset) {
+	public static StringBuffer makeInset(int inset) {
 		StringBuffer sb = new StringBuffer();
 		
 		for (int i = 0; i < inset; i++) {
-			sb.append("  ");
+			sb.append(INSET);
 		}
 		
 		return sb;
@@ -180,7 +229,7 @@ public class GedcomFormatter {
 	 * @param preStringLength The current length of the string on this line
 	 * @return
 	 */
-	protected static StringBuffer makeRightAlign(int spaceFromLeft, int preStringLength) {
+	public static StringBuffer makeRightAlign(int spaceFromLeft, int preStringLength) {
 		StringBuffer sb = new StringBuffer();
 				
 		int spaceNeeded = spaceFromLeft - preStringLength;
@@ -210,46 +259,68 @@ public class GedcomFormatter {
 	 * [&lt;ITEM1&gt;|&lt;ITEM2&gt;|&lt;ITEM3&gt;]
 	 * 
 	 * @param list
-	 * @param itemPrefix
+	 * @param itemPrefix 
 	 * @param itemSuffix
 	 * @return
 	 */
-	protected static StringBuffer makeOrList(LinkedList<String> list, String itemPrefix, String itemSuffix) {
-		StringBuffer sb = new StringBuffer();
+	public static StringBuilder makeOrList(Collection<String> list, String itemPrefix, String itemSuffix) {
+		return makeStringList(list, "|", itemPrefix, itemSuffix, true, null, true);
+	}
+	
+	/**
+	 * 
+	 * 
+	 * @param list
+	 * @param separator
+	 * @param itemPrefix 
+	 * @param itemSuffix
+	 * @param includeNullAndEmpty
+	 * @param replaceNullWith
+	 * @param addBrackets
+	 * @return
+	 */
+	public static StringBuilder makeStringList(Collection<String> list, String separator, 
+			String itemPrefix, String itemSuffix, boolean includeNullAndEmpty, 
+			String replaceNullWith, boolean addBrackets) {
+		StringBuilder sb = new StringBuilder();
 		
-		if (list.size() > 1) {
+		if (addBrackets && list.size() > 1) {
 			sb.append("[");
 		}
 		
-		for (int i = 0; i < list.size(); i++) {
-			if (i > 0) {
-				sb.append("|");
+		for (String item : list) {
+			if (item == null) {
+				item = replaceNullWith;
 			}
 			
-			String item = list.get(i);
+			if (!includeNullAndEmpty && (item == null || item.length() == 0)) {
+				continue;
+			}
 			
-			if (item.equals("NULL")) {
+			if (sb.length() > 1 && separator != null) {
+				sb.append(separator);
+			}
+			
+			if (item == null || item.equals("NULL")) {
 				sb.append("<");
-			} else {
+			} else if (itemPrefix != null) {
 				sb.append(itemPrefix);
 			}
 			
-			sb.append(list.get(i));
+			sb.append(item);
 			
-			if (item.equals("NULL")) {
+			if (item == null || item.equals("NULL")) {
 				sb.append(">");
-			} else {
+			} else if (itemSuffix != null) {
 				sb.append(itemSuffix);
 			}
 		}
 		
-		if (list.size() > 1) {
+		if (addBrackets && list.size() > 1) {
 			sb.append("]");
 		}
 		
 		return sb;
 	}
-	
-	
 
 }

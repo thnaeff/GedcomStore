@@ -1,7 +1,9 @@
 /**
  * 
  */
-package ch.thn.gedcom.store;
+package ch.thn.gedcom.data;
+
+import ch.thn.gedcom.store.GedcomStoreLine;
 
 /**
  * A {@link GedcomLine} represents on line of a {@link GedcomBlock}. Each line 
@@ -12,7 +14,7 @@ package ch.thn.gedcom.store;
  * 
  * 
  * @author thomas
- *
+ * @see GedcomObject
  */
 public abstract class GedcomLine extends GedcomObject {
 	
@@ -36,60 +38,96 @@ public abstract class GedcomLine extends GedcomObject {
 
 	}
 	
-	
+	/**
+	 * Sets the child block for this line
+	 * 
+	 * @param childBlock
+	 */
 	protected void setChildBlock(GedcomBlock childBlock) {
 		this.childBlock = childBlock;
 	}
 	
-	protected GedcomStoreLine getStoreLine() {
+	/**
+	 * Returns the store line which contains all the parsed information for 
+	 * this line
+	 * 
+	 * @return
+	 */
+	public GedcomStoreLine getStoreLine() {
 		return storeLine;
 	}
 	
 	
-	
+	/**
+	 * Sets the value for this line. If a value can not be set for this line, 
+	 * for example if it is a structure line or if the line does not have a value 
+	 * name, a {@link GedcomAccessError} is thrown.
+	 * 
+	 * @param value
+	 * @return
+	 */
 	public GedcomTagLine setValue(String value) {
 		if (this instanceof GedcomTagLine) {
 			return ((GedcomTagLine)this).setValue(value);
 		} else {
-			System.out.println("[ERROR] Can not set a value for the structure line " + this.getId());
-			return null;
+			throw new GedcomAccessError("This is not a tag line. Can not set a value for the structure line " + this.getId());
 		}
 	}
 	
+	/**
+	 * Sets the xref for this line. If a xref can not be set for this line, 
+	 * for example if it is a structure line or if the line does not have a xref 
+	 * name, a {@link GedcomAccessError} is thrown.
+	 * 
+	 * @param xref
+	 * @return
+	 */
 	public GedcomTagLine setXRef(String xref) {
 		if (this instanceof GedcomTagLine) {
 			return ((GedcomTagLine)this).setXRef(xref);
 		} else {
-			System.out.println("[ERROR] Can not set an xref for the structure line " + this.getId());
-			return null;
+			throw new GedcomAccessError("This is not a tag line. Can not set an xref for the structure line " + this.getId());
 		}
 	}
 	
+	/**
+	 * Returns the value which is set for this line. If a value can not be set for this line, 
+	 * for example if it is a structure line or if the line does not have a value 
+	 * name, a {@link GedcomAccessError} is thrown.
+	 * 
+	 * @return
+	 */
 	public String getValue() {
 		if (this instanceof GedcomTagLine) {
 			return ((GedcomTagLine)this).getValue();
 		} else {
-			System.out.println("[ERROR] Can not return a value from the structure line " + this.getId());
-			return null;
+			throw new GedcomAccessError("This is not a tag line. Can not return a value from the structure line " + this.getId());
 		}
 	}
 	
+	/**
+	 * Returns the xref which is set for this line. If a xref can not be set for this line, 
+	 * for example if it is a structure line or if the line does not have a xref 
+	 * name, a {@link GedcomAccessError} is thrown.
+	 * 
+	 * @return
+	 */
 	public String getXRef() {
 		if (this instanceof GedcomTagLine) {
 			return ((GedcomTagLine)this).getXRef();
 		} else {
-			System.out.println("[ERROR] Can not return an xref from the structure line " + this.getId());
-			return null;
+			throw new GedcomAccessError("This is not a tag line. Can not return " +
+					"an xref from the structure line " + this.getId());
 		}
+	}
+	
+	public GedcomBlock getChildBlock() {
+		return childBlock;
 	}
 	
 	@Override
 	public GedcomBlock getParentBlock() {
 		return parentBlock;
-	}
-	
-	public GedcomBlock getBlock() {
-		return childBlock;
 	}
 	
 	@Override
@@ -101,23 +139,55 @@ public abstract class GedcomLine extends GedcomObject {
 		return parentBlock.getParentLine();
 	}
 	
-	
-	public abstract String getId();
-	
-	public abstract int getLevel();
-	
+	/**
+	 * Checks if this line has any child lines
+	 * 
+	 * @return
+	 */
 	public boolean hasChildLines() {
 		return (childBlock != null);
 	}
 	
+	/**
+	 * Clears all the values of this line and resets the flag which indicates 
+	 * if a value for this line has been set.
+	 * 
+	 */
 	public abstract void clear();
 	
+	/**
+	 * Returns the minimum number of lines of the type of this line which are 
+	 * required in one block
+	 * 
+	 * @return
+	 */
 	public int getMinNumberOfLines() {
 		return storeLine.getMin();
 	}
 	
+	/**
+	 * Returns the maximum number of lines of the type of this line which are 
+	 * allowed in one block. A returned number of 0 indicates that there is 
+	 * not maximum limit (given as M in the lineage linked grammar).
+	 * 
+	 * @return
+	 */
 	public int getMaxNumberOfLines() {
 		return storeLine.getMax();
+	}
+	
+	/**
+	 * Counts how many of this lines are already added to its block
+	 * 
+	 * @return
+	 */
+	public int getNumberOfLines() {
+		if (isTagLine()) {
+			return getParentBlock().getNumberOfLines(getAsTagLine().getTag());
+		} else {
+			return getParentBlock().getNumberOfLines(getAsStructureLine().getStructureName(), 
+					getAsStructureLine().getStructureVariationTag());
+		}
 	}
 	
 	
@@ -143,7 +213,7 @@ public abstract class GedcomLine extends GedcomObject {
 	public GedcomLine getChildLine(String structureName, String tag,
 			int lineNumber) {
 		if (childBlock == null) {
-			return null;
+			throw new GedcomAccessError("This " + getId() + " line does not have any child lines added.");
 		}
 		
 		return childBlock.getChildLine(structureName, tag, lineNumber);
@@ -151,13 +221,23 @@ public abstract class GedcomLine extends GedcomObject {
 	
 	
 	@Override
-	protected GedcomBlock getStartBlock() {
+	public GedcomBlock getStartBlock() {
 		return parentBlock;
 	}
 	
 	@Override
-	protected GedcomBlock getFollowingBlock() {
+	public GedcomBlock getFollowingBlock() {
 		return childBlock;
+	}
+	
+	@Override
+	public boolean isLine() {
+		return true;
+	}
+	
+	@Override
+	public GedcomLine getAsLine() {
+		return this;
 	}
 	
 	@Override

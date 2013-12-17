@@ -7,23 +7,66 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+import ch.thn.gedcom.GedcomFormatter;
+import ch.thn.gedcom.GedcomHelper;
+import ch.thn.gedcom.GedcomToString;
+import ch.thn.gedcom.data.GedcomBlock;
+import ch.thn.gedcom.data.GedcomCreationError;
+import ch.thn.gedcom.data.GedcomLine;
+import ch.thn.util.StringUtil;
+
 /**
+ * The {@link GedcomStore} has the functionality to parse a lineage-linked grammar 
+ * file and to retrieve the parsed structures from it.
+ * 
  * @author thomas
  *
  */
 public class GedcomStore {
-		
+	
+	public static final String GEDCOM_FILENAME_EXTENSION = "gedg";
 	
 	/**
-	 * All structures in an ordered list with the parsing order
+	 * The gedcom grammar file needs these keywords before the first structure. 
+	 * Without these keywords parsing will fail. 
+	 */
+	public static enum FileHeaderKeywords {
+		/** The version of the gedcom grammar */
+		GRAMPS_VERSION("GRAMPS_VERSION"), 
+		/** The source of the gedcom grammar (The website/file/book/...) */
+		GRAMPS_SOURCE("GRAMPS_SOURCE"), 
+		/**
+		 * A description about the gedcom grammar file. List any modifications 
+		 * of the grammar structures here and give any additional information.<br>
+		 * The description can have multiple lines. Everything after the GRAMPS_DESCRIPTION 
+		 * keyword and the next keyword or the first structure will be taken 
+		 * as description.
+		 */
+		GRAMPS_DESCRIPTION("GRAMPS_DESCRIPTION");
+		
+		protected String value = null;
+		
+		private FileHeaderKeywords(String value) {
+			this.value = value;
+		}
+		
+		public String getValue() {
+			return value;
+		}
+	};
+	
+	/**
+	 * All structures in an ordered list in their parsed order
 	 */
 	private LinkedList<GedcomStoreStructure> structures = null;
 	
 	/**
-	 * This map contains all the available structure names and links the to the 
+	 * This map contains all the available structure names and links them to the 
 	 * structures. If multiple variations of a structure are available, the variation 
 	 * can only be determined by the line ID of one of the top-lines of the first 
 	 * block (a top-line is a line with the index "n" in the lineage-linked grammar). 
@@ -43,28 +86,55 @@ public class GedcomStore {
 	 */
 	private HashMap<String, LinkedList<GedcomStoreStructure>> variations = null;
 	
+	private String loadedFileVersion = null;
+	private String loadedFileSource = null;
+	private ArrayList<String> loadedFileDescription = null;
 	
 	private boolean showParsingOutput = true;
 	private boolean showAccessOutput = true;
 	
 	/**
-	 * 
+	 * Creates a new empty store object which can be filled with structures by 
+	 * parsing a lineage-linked grammar file.
 	 */
 	public GedcomStore() {
 		
 		structures = new LinkedList<GedcomStoreStructure>();
 		idToVariationsLinks = new HashMap<String, HashMap<String,LinkedList<GedcomStoreStructure>>>();
 		variations = new HashMap<String, LinkedList<GedcomStoreStructure>>();
+		loadedFileDescription = new ArrayList<String>();
+	}
+	
+	/**
+	 * Clears all objects from the store
+	 */
+	public void clear() {
+		structures.clear();
+		idToVariationsLinks.clear();
+		variations.clear();
 	}
 	
 	
-	
-	public void parse(String grammarFile) {
+	/**
+	 * Parses the given lineage-linked grammar file and adds all the structures 
+	 * to this store.
+	 * 
+	 * @param grammarFile
+	 * @throws GedcomParseException
+	 */
+	public void parse(String grammarFile) throws GedcomParseException {
 		
+		System.out.println("Adding objects from: " + grammarFile + "\n");
 		
-		System.out.println("Adding objects from: " + grammarFile);
+		if (!grammarFile.endsWith("." + GEDCOM_FILENAME_EXTENSION)) {
+			throw new GedcomParseException("Invalid GEDCOM grammar file. Only *." + 
+						GEDCOM_FILENAME_EXTENSION + " Files supported");
+		}
 		
 		BufferedReader br = null;
+		int lineCount = 0;
+		boolean firstStructureFound = false;
+		boolean descriptionFound = false;
 		
 		try {
 			br = new BufferedReader(new FileReader(grammarFile));
@@ -73,31 +143,72 @@ public class GedcomStore {
 			LinkedList<String> block = new LinkedList<String>();
 			
 			while((line = br.readLine()) != null) {
+				lineCount++;
 				
 				//Remove all leading and trailing extra stuff (spaces, tags, newlines, linefeeds)
-				line = GedcomHelper.removeAll(GedcomHelper.leadingTrailingPatternWhole, line);
+				line = StringUtil.removeAll(GedcomHelper.leadingTrailingPatternWhole, line);
 				//Remove any excessive spaces
-				line = GedcomHelper.replaceAll(GedcomHelper.spacesPattern, line, " ");
-				//No spaces around or-signs
-				line = GedcomHelper.replaceAll(GedcomHelper.orPattern, line, "|");
-				//No spaces around open brackets
-				line = GedcomHelper.replaceAll(GedcomHelper.bracketOpen, line, "[");
-				//No spaces around closing brackets
-				line = GedcomHelper.replaceAll(GedcomHelper.bracketClose, line, "]");
+				line = StringUtil.replaceAll(GedcomHelper.spacesPattern, line, " ");
 				
 				//Skip empty lines
 				if (line.length() == 0) {
 					continue;
 				}
 				
-				errorCheck(line);
+				//As long as the first structure has not yet appeared and the 
+				//current line is not the start of a structure, process the 
+				//file header lines
+				if (!firstStructureFound) {
+					if (!StringUtil.matches(GedcomHelper.structureNamePattern, line)) {
+						if (line.startsWith(FileHeaderKeywords.GRAMPS_VERSION.value + "=")) {
+							loadedFileVersion = line.split("=")[1];
+						} else if (line.startsWith(FileHeaderKeywords.GRAMPS_SOURCE.value + "=")) {
+							loadedFileSource = line.split("=")[1];
+						} else if (line.startsWith(FileHeaderKeywords.GRAMPS_DESCRIPTION.value + "=")) {
+							String[] s = line.split("=");
+							if (s.length > 0 && s[1].length() > 0) {
+								loadedFileDescription.add(s[1]);
+							}
+							descriptionFound = true;
+						} else if (descriptionFound) {
+							loadedFileDescription.add(line);
+						}
+						
+						continue;
+					} else {
+						if (loadedFileVersion == null || loadedFileSource == null 
+								|| loadedFileDescription.size() == 0) {
+							throw new GedcomParseException("Invalid gedcom grammar file format. " +
+									"The file needs a header with the following kewords: " + 
+									Arrays.toString(FileHeaderKeywords.values()));
+						}
+						
+						System.out.println("Gramps version: " + loadedFileVersion);
+						System.out.println("Source of gedcom grammar: " + loadedFileSource);
+						
+						for (int i = 0; i < loadedFileDescription.size(); i++) {
+							System.out.println(loadedFileDescription.get(i));
+						}
+						
+						firstStructureFound = true;
+					}
+				}
 				
-				if (GedcomHelper.matches(GedcomHelper.structureNamePatternWhole, line)) {
+				//No spaces around OR-signs
+				line = StringUtil.replaceAll(GedcomHelper.orPattern, line, "|");
+				//No spaces around open brackets
+				line = StringUtil.replaceAll(GedcomHelper.bracketOpen, line, "[");
+				//No spaces around closing brackets
+				line = StringUtil.replaceAll(GedcomHelper.bracketClose, line, "]");
+				
+				parsingErrorCheck(line);
+				
+				if (StringUtil.matches(GedcomHelper.structureNamePattern, line)) {
 					//A new structure starts
 					
 					if (block.size() > 0) {
 						//Process current block...
-						processBlock(block);
+						parseBlock(block);
 						//...and reset the block after processing
 						block.clear();
 					}
@@ -107,50 +218,50 @@ public class GedcomStore {
 					
 				} else {
 					//Only add the current line to the block if the start of a 
-					//structure has been found and the bock already contains one 
+					//structure has been found and the block already contains one 
 					//line (the line with the structure name)
 					if (block.size() > 0) {
 						block.add(line);
 					}
 				}
-				
-				
+								
 			}
 			
 			if (block.size() > 0) {
 				//And process the last block
-				processBlock(block);
+				parseBlock(block);
 			}
 			
 		} catch (FileNotFoundException e) {
-			System.err.println("File " + grammarFile + " not found!");
+			throw new GedcomParseException("File " + grammarFile + " not found!");
 		} catch (IOException e) {
-			System.err.println("Failed to read line");
+			throw new GedcomParseException("Failed to read line " + lineCount);
+		} finally {
+			if (br != null) {
+				try {
+					br.close();
+				} catch (IOException e) {
+					throw new GedcomParseException("Failed to close file reader for " + grammarFile);
+				}
+			}
 		}
 		
-		try {
-			br.close();
-		} catch (IOException e) {
-			System.err.println("Failed to close file reader");
-		}
-		
-		System.out.println("\nAdding objects done (" + structures.size() + " objects parsed)");
-		
-		
+		System.out.println("\nAdding objects done (" + structures.size() + " objects parsed)\n");
 	}
 	
 	
 	/**
-	 * Process a block, starting from the block name (linke FAMILY_EVENT_DETAIL etc.) 
+	 * Parses a block, starting from the block name (like FAMILY_EVENT_DETAIL etc.) 
 	 * to the last line, just before a new block name begins. A block contains the 
 	 * block name on the first line, and might contain multiple block variations
 	 * 
 	 * @param block
+	 * @throws GedcomParseException
 	 */
-	private void processBlock(LinkedList<String> block) {
+	private void parseBlock(LinkedList<String> block) throws GedcomParseException {
 		
 		//The first line is the structure name
-		String structureName = GedcomHelper.getPattern(GedcomHelper.idPattern, block.get(0));
+		String structureName = StringUtil.getMatchingFirst(GedcomHelper.idPattern, block.get(0));
 		
 		if (showParsingOutput) {
 			System.out.println("\n=== " + structureName + " ===");
@@ -165,8 +276,8 @@ public class GedcomStore {
 				String line = block.get(i);
 				
 				//Process all sub-blocks one by one
-				if (GedcomHelper.matches(GedcomHelper.subBlockDivider, line)) {
-					processSubBlock(new LinkedList<String>(block.subList(lastDivider, i)), structureName);
+				if (StringUtil.contains(GedcomHelper.subBlockDivider, line)) {
+					parseSubBlock(new LinkedList<String>(block.subList(lastDivider, i)), structureName);
 					lastDivider = i + 1;
 				}
 				
@@ -174,7 +285,7 @@ public class GedcomStore {
 			
 		} else {
 			//No variations -> process the whole block without the structure-ID
-			processSubBlock(new LinkedList<String>(block.subList(1, block.size())), structureName);
+			parseSubBlock(new LinkedList<String>(block.subList(1, block.size())), structureName);
 		}
 		
 		
@@ -187,11 +298,14 @@ public class GedcomStore {
 	 * 
 	 * @param subBlock
 	 * @param structureName
+	 * @throws GedcomParseException
 	 */
-	private void processSubBlock(LinkedList<String> subBlock, String structureName) {
+	private void parseSubBlock(LinkedList<String> subBlock, String structureName) throws GedcomParseException {
 		
 		GedcomStoreStructure storeStructure = new GedcomStoreStructure(this, structureName);
-		if (storeStructure.parse(subBlock, structureName)) {
+		
+		//Parse the sub block and build the new structure
+		if (storeStructure.parse(subBlock)) {
 			//Create a simple list of all the available structures
 			structures.add(storeStructure);
 			
@@ -199,6 +313,7 @@ public class GedcomStore {
 			//Link all the line ID's of the first block to their structure
 			
 			if (!idToVariationsLinks.containsKey(structureName)) {
+				//Add a new structure
 				idToVariationsLinks.put(structureName, new HashMap<String, LinkedList<GedcomStoreStructure>>());
 			}
 			
@@ -206,6 +321,7 @@ public class GedcomStore {
 			
 			for (String id : allIds) {
 				if (!idToVariationsLinks.get(structureName).containsKey(id)) {
+					//Add all new line ID's
 					idToVariationsLinks.get(structureName).put(id, new LinkedList<GedcomStoreStructure>());
 				}
 				
@@ -232,15 +348,20 @@ public class GedcomStore {
 	 * 
 	 * @param gedcomLine
 	 */
-	private boolean errorCheck(String gedcomLine) {
+	private boolean parsingErrorCheck(String gedcomLine) throws GedcomParseException {
 		
-		//Ignore comment lines
+		//Ignore comment-only lines
 		if (gedcomLine.startsWith("/*")) {
 			return true;
 		}
 		
-		//Ignore structure name lines
+		//structure name lines
 		if (gedcomLine.endsWith(":=")) {
+			if (!StringUtil.matches(GedcomHelper.structureNamePattern, gedcomLine)) {
+				throw new GedcomParseException("The structure name line '" + gedcomLine + "' is invalid. " +
+						"A structure name line can only contain characters like 'A-Z', '_' and has to end with ':='.");
+			}
+			
 			return true;
 		}
 		
@@ -249,23 +370,23 @@ public class GedcomStore {
 			return true;
 		}
 		
-		if (GedcomHelper.matches(GedcomHelper.errorCheckSpacingAfter, gedcomLine)) {
-			System.out.println("[WARNING] On line '" + gedcomLine + "'. One or more spaces might be missing to identify parts of the line. " +
-					"Make sure there is at least one space after characters like '>', '@', ']'.");
+		if (StringUtil.contains(GedcomHelper.errorCheckSpacingAfter, gedcomLine)) {
+			throw new GedcomParseException("On line '" + gedcomLine + "'. One or more spaces might be missing to identify parts of the line. " +
+					"Make sure there is at least one space after fields like '<...>', '@...@', '[...]' etc.");
 		}
 		
-		if (GedcomHelper.matches(GedcomHelper.errorCheckSpacingAfter, gedcomLine)) {
-			System.out.println("[WARNING] On line '" + gedcomLine + "'. One or more spaces might be missing to identify parts of the line. " +
-					"Make sure there is at least one space before characters like '<', '@', '[', '{'.");
+		if (StringUtil.contains(GedcomHelper.errorCheckSpacingAfter, gedcomLine)) {
+			throw new GedcomParseException("On line '" + gedcomLine + "'. One or more spaces might be missing to identify parts of the line. " +
+					"Make sure there is at least one space before characters like fields like '<...>', '@...@', '[...]', '{...}' etc.");
 		}
 		
-		if (!GedcomHelper.matches(GedcomHelper.errorCheckIndexFormat, gedcomLine)) {
-			System.out.println("[WARNING] On line '" + gedcomLine + "'. The format of the line index is not valid. " +
-					"A index can either be 'n' or a '+' followed by a number 0-99.");
+		if (!StringUtil.contains(GedcomHelper.errorCheckIndexFormat, gedcomLine)) {
+			throw new GedcomParseException("On line '" + gedcomLine + "'. The format of the line index is not valid. " +
+					"A index can either be 'n' or '+' followed by a number 1-99.");
 		}
 		
-		if (!GedcomHelper.matches(GedcomHelper.errorCheckMinMax, gedcomLine)) {
-			System.out.println("[WARNING] On line '" + gedcomLine + "'. The min/max item is not valid or missing. " +
+		if (!StringUtil.contains(GedcomHelper.errorCheckMinMax, gedcomLine)) {
+			throw new GedcomParseException("On line '" + gedcomLine + "'. The min/max item is not valid or missing. " +
 					"A min/max item looks like the following: {min:max}");
 		}
 		
@@ -276,7 +397,9 @@ public class GedcomStore {
 	
 	/**
 	 * Gets an instance of the {@link GedcomBlock} with the given structure name. This 
-	 * method only works if the structure does not have multiple variations.
+	 * method only works if the structure does not have multiple variations.<br>
+	 * If there the structure has multiple variations, use 
+	 * {@link #getGedcomBlock(String, String, int)}
 	 * 
 	 * @param structureName
 	 * @param copyMode
@@ -289,7 +412,10 @@ public class GedcomStore {
 	/**
 	 * Gets an instance of the {@link GedcomBlock} with the given structure name and 
 	 * the variation defined with the given tag. Only works if each variation is 
-	 * defined with a different tag.
+	 * defined with a different tag.<br>
+	 * If there are multiple variations with the same tag, which differ only by 
+	 * the presence of the xref/value fields, use 
+	 * {@link #getGedcomBlock(String, String, boolean, boolean, int)}
 	 * 
 	 * 
 	 * @param structureName
@@ -314,46 +440,63 @@ public class GedcomStore {
 	 * @param copyMode
 	 * @return
 	 */
-	public GedcomBlock getGedcomBlock(String structureName, String tag, boolean withXRef, boolean withValue, int copyMode) {
+	public GedcomBlock getGedcomBlock(String structureName, String tag, boolean withXRef,
+			boolean withValue, int copyMode) {
 		return getGedcomBlock(null, structureName, tag, copyMode, true, withXRef, withValue);
 	}
 	
-	
-	protected GedcomBlock getGedcomBlock(GedcomLine parentLine, String structureName, String lineId, int copyMode, 
-			boolean lookForXRefAndValueVariation, boolean withXRef, boolean withValue) {
+	/**
+	 * <i>For internal use!</i><br>
+	 * <br>
+	 * Gets an instance of a {@link GedcomBlock}. The parent line of the gedcom 
+	 * block will be the one given with <code>parentLine</code>.
+	 * 
+	 * @param parentLine
+	 * @param structureName
+	 * @param tag
+	 * @param copyMode
+	 * @param lookForXRefAndValueVariation
+	 * @param withXRef
+	 * @param withValue
+	 * @return
+	 */
+	public GedcomBlock getGedcomBlock(GedcomLine parentLine, String structureName, String tag, 
+			int copyMode, boolean lookForXRefAndValueVariation, boolean withXRef, boolean withValue) {
 		
 		if (idToVariationsLinks.containsKey(structureName)) {
 			
-			if (lineId == null) {
+			if (tag == null) {
 				//The line ID can only be omitted if there is only one variation available
 				if (variations.get(structureName).size() == 1) {
 					//There is only one variation available -> get the first line ID 
 					//of the first variation
-					lineId = variations.get(structureName).get(0).getStoreBlock().getAllLineIDs().get(0);
+					tag = variations.get(structureName).get(0).getStoreBlock().getAllLineIDs().get(0);
 				} else {
-					System.out.println("[ERROR] Can not get structure " + structureName + " with only the structure name. " +
+					throw new GedcomCreationError("Can not get structure " + structureName + 
+							" with only the structure name. " +
 							"This structure has multiple variations " + 
 							GedcomFormatter.makeOrList(new LinkedList<String>(idToVariationsLinks.get(structureName).keySet()), "", "") + ".");
-					return null;
 				}
 			}
 			
-			if (!idToVariationsLinks.get(structureName).containsKey(lineId)) {
-				System.out.println("[ERROR] Structure " + structureName + " with line ID " + lineId + " does not exist.");
-				return null;
+			if (!idToVariationsLinks.get(structureName).containsKey(tag)) {
+				throw new GedcomCreationError("Structure " + structureName + 
+						" with line ID " + tag + " does not exist.");
 			}
 			
 			int variation = 0;
 			
 			if (lookForXRefAndValueVariation) {
-				variation = lookForXRefAndValueVariation(idToVariationsLinks.get(structureName).get(lineId), structureName, lineId, withXRef, withValue);
+				variation = lookForXRefAndValueVariation(idToVariationsLinks.get(structureName)
+						.get(tag), structureName, tag, withXRef, withValue);
 				
 				if (variation == -1) {
 					return null;
 				}
 			}
 			
-			return idToVariationsLinks.get(structureName).get(lineId).get(variation).getStoreBlock().getBlockInstance(parentLine, lineId, copyMode);
+			return idToVariationsLinks.get(structureName).get(tag).get(variation)
+					.getStoreBlock().getBlockInstance(parentLine, tag, copyMode);
 			
 		}
 		
@@ -369,7 +512,7 @@ public class GedcomStore {
 	 * @param lineId
 	 * @param withXRef
 	 * @param withValue
-	 * @return
+	 * @return The variation index
 	 */
 	private int lookForXRefAndValueVariation(LinkedList<GedcomStoreStructure> variations, String structureName, 
 			String lineId, boolean withXRef, boolean withValue) {
@@ -385,7 +528,7 @@ public class GedcomStore {
 			
 		}
 		
-		String error = "[ERROR] Structure " + structureName + " with line ID " + lineId;
+		String error = "Structure " + structureName + " with line ID " + lineId;
 		
 		if (withXRef) {
 			error = error + " and XRef-field";
@@ -395,9 +538,8 @@ public class GedcomStore {
 			error = error + " and value-field";
 		}
 		
-		System.out.println(error + " does not exist.");
+		throw new GedcomCreationError(error + " does not exist.");
 		
-		return -1;
 	}
 	
 	
@@ -406,7 +548,7 @@ public class GedcomStore {
 	 * 
 	 * @return
 	 */
-	protected LinkedList<GedcomStoreStructure> getStructures() {
+	public LinkedList<GedcomStoreStructure> getStructures() {
 		return structures;
 	}
 	
@@ -423,7 +565,12 @@ public class GedcomStore {
 	
 	
 	
-	
+	/**
+	 * Returns the number of variatinons for the structure with the given name
+	 * 
+	 * @param structureName
+	 * @return
+	 */
 	public int getNumberOfStructureVariations(String structureName) {
 		if (!variations.containsKey(structureName)) {
 			return 0;
@@ -432,6 +579,13 @@ public class GedcomStore {
 		return variations.get(structureName).size();
 	}
 	
+	/**
+	 * Returns <code>true</code> if the structure with the given name has 
+	 * one or more variations
+	 * 
+	 * @param structureName
+	 * @return
+	 */
 	public boolean structureHasVariations(String structureName) {
 		return (getNumberOfStructureVariations(structureName) > 0);
 	}
@@ -447,30 +601,62 @@ public class GedcomStore {
 		return new LinkedList<String>(idToVariationsLinks.get(structureName).keySet());
 	}
 	
+	/**
+	 * Checks if a structure with the given name is available
+	 * 
+	 * @param structureName
+	 * @return
+	 */
 	public boolean hasStructure(String structureName) {
 		return idToVariationsLinks.containsKey(structureName);
 	}
 	
-	
+	/**
+	 * Returns whether or not the parsing output is showing
+	 * 
+	 * @return
+	 */
 	public boolean showParsingOutput() {
 		return showParsingOutput;
 	}
 	
+	/**
+	 * Turn showing the parsing output on or off
+	 * 
+	 * @param show
+	 */
 	public void showParsingOutput(boolean show) {
 		showParsingOutput = show;
 	}
 	
+	/**
+	 * Returns whether or not the access output is showing or not showing. The 
+	 * access output is shown when navigating through {@link GedcomBlock}s and 
+	 * {@link GedcomLine}s. This is a general switch which affects all the 
+	 * blocks and lines taken from this store.
+	 * 
+	 * @return
+	 */
 	public boolean showAccessOutput() {
 		return showAccessOutput;
 	}
 	
+	/**
+	 * Turn the access output on or off. The 
+	 * access output is shown when navigating through {@link GedcomBlock}s and 
+	 * {@link GedcomLine}s. This is a general switch which affects all the 
+	 * blocks and lines taken from this store.
+	 * 
+	 * @param show
+	 */
 	public void showAccessOutput(boolean show) {
 		showAccessOutput = show;
 	}
 	
+	
 	@Override
 	public String toString() {
-		return GedcomPrinter.preparePrint(this, 1, false).toString();
+		return GedcomToString.preparePrint(this, 1, false).toString();
 	}
 
 }
