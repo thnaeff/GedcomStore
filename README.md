@@ -175,7 +175,7 @@ More examples can be found in src/ch/thn/gedcom/test/
 ********************************************************************************************************
 
 
-## Links to topics about GEDCOM
+# Links to topics about GEDCOM
 * [GEDCOM Documentation (auch in deutsch)](http://www.daubnet.com/de/gedcom)
 * [The GEDCOM Standard Release 5.5](http://homepages.rootsweb.ancestry.com/~pmcbride/gedcom/55gctoc.htm)
 * [GEnealogical Data COMmunication on Wikipedia](http://en.wikipedia.org/wiki/GEDCOM)
@@ -188,8 +188,14 @@ More examples can be found in src/ch/thn/gedcom/test/
 ********************************************************************************************************
 
 
-## Not yet implemented
+# Not yet implemented
 * Value validation (Some values only allow certain formats/lengths/...)
 
+********************************************************************************************************
+
+
+# Dependencies
+* [Joda-Time](http://http://www.joda.org)
+* My own utility library: [Util](http://github.com/thnaeff/Util)
 
 
