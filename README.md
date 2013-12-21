@@ -7,7 +7,7 @@ Since the structures are created according to the grammar file, the output does 
 
 ## Key features
 * Create your own gedcom definition file using lineage-linked grammar (preferably, take one of the "standards" and modify them to your needs if necessary - see the next point)
-* Comes with the gedcom definition files for versio 5.5 (gedcomobjects_5.5.gedg) and 5.5.1 (gedcomobjects_5.5.1.gedg), plus a slightly modified version for the [GRAMPS](http://gramps-project.org) software (gedcomobjects_5.5.1_gramps.gedg)
+* Comes with the gedcom definition files for version 5.5 (gedcomobjects_5.5.gedg) and 5.5.1 (gedcomobjects_5.5.1.gedg), plus a slightly modified version for the [GRAMPS](http://gramps-project.org) software (gedcomobjects_5.5.1_gramps.gedg)
 * Supports ALL the fields in the GEDCOM lineage-linked grammar (See "Not yet implemented" for details)
 * Choose if you want structures to be automatically populated with all mandatory lines, with all available lines or no lines
 * If structures are not populated with all lines, they are only created when needed
