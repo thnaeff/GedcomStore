@@ -369,6 +369,16 @@ public class GedcomBlock extends GedcomObject {
 	}
 	
 	/**
+	 * Gets the line with the given index
+	 * 
+	 * @param index
+	 * @return
+	 */
+	public GedcomLine getLine(int index) {
+		return lines.get(index);
+	}
+	
+	/**
 	 * Returns a list of all tag names and structure names which are added to this block
 	 * 
 	 * @return
