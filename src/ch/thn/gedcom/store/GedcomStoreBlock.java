@@ -9,9 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 
 import ch.thn.gedcom.GedcomHelper;
-import ch.thn.gedcom.GedcomToString;
-import ch.thn.gedcom.data.GedcomBlock;
-import ch.thn.gedcom.data.GedcomLine;
+import ch.thn.gedcom.printer.GedcomStorePrinter;
 import ch.thn.util.StringUtil;
 
 /**
@@ -271,19 +269,6 @@ public class GedcomStoreBlock {
 	}
 	
 	/**
-	 * Returns a new {@link GedcomBlock} instance with the configuration which has 
-	 * been parsed for this {@link GedcomStoreBlock}
-	 * 
-	 * @param parentLine
-	 * @param tag
-	 * @param copyMode
-	 * @return
-	 */
-	public GedcomBlock getBlockInstance(GedcomLine parentLine, String tag, int copyMode) {
-		return new GedcomBlock(this, parentLine, tag, copyMode);
-	}
-	
-	/**
 	 * Returns <code>true</code> if this block has one or more mandatory lines
 	 * 
 	 * @return
@@ -306,7 +291,7 @@ public class GedcomStoreBlock {
 	
 	@Override
 	public String toString() {
-		return GedcomToString.preparePrint(this, 1, false).toString();
+		return GedcomStorePrinter.preparePrint(this, 1, false).toString();
 	}
 
 }

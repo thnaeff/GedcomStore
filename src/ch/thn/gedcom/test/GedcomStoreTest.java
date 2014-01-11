@@ -3,10 +3,21 @@
  */
 package ch.thn.gedcom.test;
 
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 
-import ch.thn.gedcom.GedcomToString;
+import ch.thn.gedcom.data.GedcomLine;
+import ch.thn.gedcom.data.GedcomNode;
+import ch.thn.gedcom.data.GedcomTree;
+import ch.thn.gedcom.printer.GedcomStructureHTMLPrinter;
+import ch.thn.gedcom.printer.GedcomStorePrinter;
+import ch.thn.gedcom.printer.GedcomStructureTextPrinter;
 import ch.thn.gedcom.store.GedcomParseException;
 import ch.thn.gedcom.store.GedcomStore;
+import ch.thn.util.tree.printer.SimpleTreePrinter;
 
 /**
  * @author thomas
@@ -31,66 +42,83 @@ public class GedcomStoreTest {
 		
 	
 		System.out.println("\n\n--------------------------------------\n");
+				
+		GedcomStorePrinter.showLevelLineIndex(true);
 		
-		GedcomToString.showLevelLineIndex(true);
+		GedcomTree header = store.getGedcomTree("HEADER");
 		
-//		System.out.println(GedcomPrinter.preparePrint(store, 0, true));
+		GedcomNode header1 = header.addChildLine("HEAD");
+//		header1.newLine();
 		
-//		System.out.println(">" + GedcomPrinter.preparePrint(store.getGedcomBlock("HEADER", GedcomBlock.COPY_MODE_ALL), 0, true, true));
-//		System.out.println(">" + GedcomPrinter.preparePrint(store.getGedcomBlock("FAM_RECORD"), 0, false));
-//		System.out.println(">" + GedcomPrinter.preparePrint(store.getGedcomBlock("MULTIMEDIA_RECORD"), 0, false));
-//		System.out.println(">" + GedcomPrinter.preparePrint(store.getGedcomBlock("FAMILY_EVENT_STRUCTURE", "ENGA"), 0, false));
-//		System.out.println(">" + GedcomPrinter.preparePrint(store.getGedcomBlock("LDS_INDIVIDUAL_ORDINANCE", "SLGC"), 0, false));
-//		System.out.println(">" + GedcomPrinter.preparePrint(store.getGedcomBlock("MULTIMEDIA_LINK", "OBJE", false, false), 0, false));
-//		System.out.println(">" + GedcomPrinter.preparePrint(store.getGedcomBlock("NOTE_STRUCTURE", "NOTE"), 0, false));
-//		System.out.println(">" + GedcomPrinter.preparePrint(store.getGedcomBlock("INDIVIDUAL_EVENT_DETAIL"), 0, false));
+		GedcomNode header11 = header1.addChildLine("SOUR");
+		GedcomNode header12 = header1.addChildLine("GEDC");
+		
+		GedcomNode header111 = header11.addChildLine("VERS");
+		header11.addChildLine("NAME");
+		header11.addChildLine("CORP");
+		
+		header111.setTagLineValue("version");
+				
+		System.out.println(header.print(new GedcomStructureTextPrinter()));
+		
+		
+		
+		GedcomTree indi = store.getGedcomTree("INDIVIDUAL_RECORD");
+		
+		GedcomNode indi1 = indi.addChildLine("INDI");
+		indi1.setTagLineXRef("I987");
+		
+		GedcomNode indi11 = indi1.addChildLine("SEX");
+		GedcomNode indi12 = indi1.addChildLine("INDIVIDUAL_EVENT_STRUCTURE", "BIRT");
+		GedcomNode indi13 = indi1.addChildLine("SPOUSE_TO_FAMILY_LINK");
+		GedcomNode indi14 = indi1.addChildLine("CHANGE_DATE");
+		
+		indi11.newLine();
+		
+		GedcomNode indi131 = indi13.addChildLine("FAMS");
+		
+		GedcomNode indi141 = indi14.addChildLine("CHAN");
+		
+		GedcomNode indi1411 = indi141.addChildLine("DATE");
+		indi1411.setTagLineValue("date");
+		
+		GedcomNode indi121 = indi12.addChildLine("BIRT");
+		indi121.setTagLineValue("Y");
+		indi121.addChildLine("INDIVIDUAL_EVENT_DETAIL").addChildLine("EVENT_DETAIL").addChildLine("DATE").setTagLineValue("birth date");
+		
+		indi13.newLine().addChildLine("FAMS").setTagLineXRef("famslink");
+		
+		System.out.println(indi.print(new GedcomStructureTextPrinter()));
 
+//		System.out.println(indi.print(new SimpleTreePrinter<String, GedcomLine>(true)));
 		
-//		GedcomBlock b1 = store.getGedcomBlock("HEADER", GedcomBlock.COPY_MODE_MANDATORY);
-//		System.out.println(GedcomPrinter.preparePrint(b1, 0, true, true));
-//		GedcomBlock b2 = b1.getChildLine("HEAD", 0).getBlock();
-//		System.out.println(GedcomPrinter.preparePrint(b2, 1, true, true));
-//		GedcomBlock b3 = b2.getChildLine("GEDC", 0).getBlock();
-//		System.out.println(GedcomPrinter.preparePrint(b3, 1, true, true));
-//		
-//		GedcomLine l4 = b2.addTagLine("DATE");
-//		System.out.println(GedcomPrinter.preparePrint(l4, 1, true, true));
-//		
-//		GedcomLine l5 = b2.addTagLine("NOTE");
-//		System.out.println(GedcomPrinter.preparePrint(l5, 1, true, true));
-//		
-//		GedcomBlock b6 = b2.getChildLine("SOUR", 0).getBlock();
-//		System.out.println(GedcomPrinter.preparePrint(b6, 1, true, true));
-//		
-//		GedcomLine l7 = b6.addTagLine("CORP");
-//		System.out.println(GedcomPrinter.preparePrint(l7, 1, true, true));
-//		
-//		GedcomLine l8 = l7.getParentBlock().getChildLine("CORP", 0).getBlock().addStructureLine("ADDRESS_STRUCTURE");
-//		System.out.println(GedcomPrinter.preparePrint(l8, 1, true, true));
-//		
-//		GedcomLine l9 = l8.getParentBlock().getChildLine("ADDRESS_STRUCTURE", 0).getBlock().addTagLine("PHON").getParentBlock().addTagLine("EMAIL").getParentBlock().addTagLine("EMAIL");
-//		System.out.println(GedcomPrinter.preparePrint(l9, 1, true, true));
-//		
-//		System.out.println(">>" + GedcomPrinter.preparePrint(b1, 0, true, true));
-//		
-//		System.out.println("====");
-//		
-//		b1.followPath("HEAD", "SOUR", "CORP", "ADDRESS_STRUCTURE", "EMAIL;2").getTagLine().setValue("some.e@mail.ch");
-//		b1.followPath("HEAD", "DATE", "TIME");
-//		System.out.println(">>" + GedcomPrinter.preparePrint(b1, 0, true, true));	
+		writeToFile("/home/thomas/Desktop/familienfest/gedcomtest.html", indi.print(new GedcomStructureHTMLPrinter("Test Tree")));
 		
+	}
+	
+	
+	
+	private static void writeToFile(String filename, StringBuilder string) {
+		Writer output = null;
 		
-//		GedcomBlock b1 = store.getGedcomBlock("INDIVIDUAL_RECORD", GedcomBlock.ADD_MANDATORY);
-//		System.out.println(GedcomPrinter.preparePrint(b1, 0, true, true));
-//		
-//		GedcomLine line = b1.getChildLine("INDI").getBlock().addStructureLine("PERSONAL_NAME_STRUCTURE").getChildLine("NAME");
-//		System.out.println("Line:\n" + GedcomPrinter.preparePrint(line));
-//		System.out.println("Line:\n" + GedcomPrinter.preparePrint(line, 2, false, true));
-//		
-//		GedcomObject o1 = b1.followPath("INDI", "PERSONAL_NAME_STRUCTURE", "NAME");
-//		System.out.println("Block:\n" + GedcomPrinter.preparePrint(o1.getParentBlock(), 0, true, true));
+		try {
+			output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename), "UTF-8"));
+		} catch (IOException e) {
+			System.out.println("failed to open writer");
+			return;
+		}
 		
-		System.out.println(GedcomToString.preparePrint(store, 0, true));
+		try {
+			output.write(string.toString());
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		
+		try {
+			output.close();
+		} catch (IOException e) {
+			System.out.println("failed to close file stream");
+		}
 	}
 
 }

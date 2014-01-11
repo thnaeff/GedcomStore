@@ -8,11 +8,7 @@ import java.util.LinkedList;
 
 import ch.thn.gedcom.GedcomFormatter;
 import ch.thn.gedcom.GedcomHelper;
-import ch.thn.gedcom.GedcomToString;
-import ch.thn.gedcom.data.GedcomBlock;
-import ch.thn.gedcom.data.GedcomLine;
-import ch.thn.gedcom.data.GedcomStructureLine;
-import ch.thn.gedcom.data.GedcomTagLine;
+import ch.thn.gedcom.printer.GedcomStorePrinter;
 import ch.thn.util.StringUtil;
 
 /**
@@ -192,7 +188,7 @@ public class GedcomStoreLine {
 		}
 		
 		if (parentBlock.getStoreStructure().getStore().showParsingOutput()) {
-			System.out.println("  parsed: " + GedcomToString.preparePrint(this));
+			System.out.println("  parsed: " + GedcomStorePrinter.preparePrint(this));
 		}
 		
 		return true;
@@ -255,89 +251,89 @@ public class GedcomStoreLine {
 	
 	
 	
-	/**
-	 * Creates a new instance of a {@link GedcomLine}<br>
-	 * The returned line can be a {@link GedcomStructureLine} if a structure name 
-	 * is set, or a {@link GedcomTagLine} if no structure name is set and the 
-	 * given tag is valid.<br>
-	 * <br>
-	 * This method can be used if only one tag name for this line exists. If there 
-	 * are multiple tag names, null is returned.
-	 * 
-	 * @param parentBlock The block which should be the parent of the returned 
-	 * line
-	 * @return
-	 */
-	public GedcomLine getLineInstance(GedcomBlock parentBlock, int copyMode) {
-		
-		if (structureName != null) {
-			return new GedcomStructureLine(this, parentBlock, copyMode);
-		} else {
-			LinkedHashSet<String> tagNames = getTagNames();
-			
-			if (tagNames.size() != 1) {
-				return null;
-			}
-			
-			return new GedcomTagLine(this, parentBlock, 
-					tagNames.toArray(new String[tagNames.size()])[0], copyMode);
-		}
-	}
-	
-	/**
-	 * Creates a new instance of a {@link GedcomLine}<br>
-	 * The returned line can be a {@link GedcomStructureLine} if a structure name 
-	 * is set, or a {@link GedcomTagLine} if no structure name is set and the 
-	 * given tag is valid.<br>
-	 * <br>
-	 * This method has to be used if multiple variations for this line exists.
-	 * 
-	 * @param parentBlock The block which should be the parent of the returned 
-	 * line
-	 * @param tag
-	 * @return
-	 */
-	public GedcomLine getLineInstance(GedcomBlock parentBlock, String tag, int copyMode) {
-		
-		if (structureName != null) {
-			return new GedcomStructureLine(this, parentBlock, tag, copyMode);
-		} else {
-			if (!hasTag(tag)) {
-				return null;
-			}
-			
-			return new GedcomTagLine(this, parentBlock, tag, copyMode);
-		}
-	}
-	
-	/**
-	 * Creates a new instance of a {@link GedcomLine}<br>
-	 * The returned line can be a {@link GedcomStructureLine} if a structure name 
-	 * is set, or a {@link GedcomTagLine} if no structure name is set and the 
-	 * given tag is valid.<br>
-	 * <br>
-	 * This method has to be used if multiple variations for this line exists.
-	 * 
-	 * @param parentBlock The block which should be the parent of the returned 
-	 * line
-	 * @param tag
-	 * @param withXRef
-	 * @param withValue
-	 * @return
-	 */
-	public GedcomLine getLineInstance(GedcomBlock parentBlock, String tag, 
-			boolean withXRef, boolean withValue, int copyMode) {
-		
-		if (structureName != null) {
-			return new GedcomStructureLine(this, parentBlock, tag, withXRef, withValue, copyMode);
-		} else {
-			if (!hasTag(tag)) {
-				return null;
-			}
-			
-			return new GedcomTagLine(this, parentBlock, tag, copyMode);
-		}
-	}
+//	/**
+//	 * Creates a new instance of a {@link GedcomLine}<br>
+//	 * The returned line can be a {@link GedcomStructureLine} if a structure name 
+//	 * is set, or a {@link GedcomTagLine} if no structure name is set and the 
+//	 * given tag is valid.<br>
+//	 * <br>
+//	 * This method can be used if only one tag name for this line exists. If there 
+//	 * are multiple tag names, null is returned.
+//	 * 
+//	 * @param parentLine The line which should be the parent of the returned 
+//	 * line
+//	 * @return
+//	 */
+//	public GedcomLine getLineInstance(GedcomLine parentLine, int copyMode) {
+//		
+//		if (structureName != null) {
+//			return new GedcomStructureLine(this, parentLine, copyMode);
+//		} else {
+//			LinkedHashSet<String> tagNames = getTagNames();
+//			
+//			if (tagNames.size() != 1) {
+//				return null;
+//			}
+//			
+//			return new GedcomTagLine(this, parentLine, 
+//					tagNames.toArray(new String[tagNames.size()])[0], copyMode);
+//		}
+//	}
+//	
+//	/**
+//	 * Creates a new instance of a {@link GedcomLine}<br>
+//	 * The returned line can be a {@link GedcomStructureLine} if a structure name 
+//	 * is set, or a {@link GedcomTagLine} if no structure name is set and the 
+//	 * given tag is valid.<br>
+//	 * <br>
+//	 * This method has to be used if multiple variations for this line exists.
+//	 * 
+//	 * @param parentLine The line which should be the parent of the returned 
+//	 * line
+//	 * @param tag
+//	 * @return
+//	 */
+//	public GedcomLine getLineInstance(GedcomLine parentLine, String tag, int copyMode) {
+//		
+//		if (structureName != null) {
+//			return new GedcomStructureLine(this, parentLine, tag, copyMode);
+//		} else {
+//			if (!hasTag(tag)) {
+//				return null;
+//			}
+//			
+//			return new GedcomTagLine(this, parentLine, tag, copyMode);
+//		}
+//	}
+//	
+//	/**
+//	 * Creates a new instance of a {@link GedcomLine}<br>
+//	 * The returned line can be a {@link GedcomStructureLine} if a structure name 
+//	 * is set, or a {@link GedcomTagLine} if no structure name is set and the 
+//	 * given tag is valid.<br>
+//	 * <br>
+//	 * This method has to be used if multiple variations for this line exists.
+//	 * 
+//	 * @param parentLine The line which should be the parent of the returned 
+//	 * line
+//	 * @param tag
+//	 * @param withXRef
+//	 * @param withValue
+//	 * @return
+//	 */
+//	public GedcomLine getLineInstance(GedcomLine parentLine, String tag, 
+//			boolean withXRef, boolean withValue, int copyMode) {
+//		
+//		if (structureName != null) {
+//			return new GedcomStructureLine(this, parentLine, tag, withXRef, withValue, copyMode);
+//		} else {
+//			if (!hasTag(tag)) {
+//				return null;
+//			}
+//			
+//			return new GedcomTagLine(this, parentLine, tag, copyMode);
+//		}
+//	}
 	
 	/**
 	 * Returns the minimum number of lines which are required in one block
@@ -532,6 +528,6 @@ public class GedcomStoreLine {
 	
 	@Override
 	public String toString() {
-		return GedcomToString.preparePrint(this).toString();
+		return GedcomStorePrinter.preparePrint(this).toString();
 	}
 }

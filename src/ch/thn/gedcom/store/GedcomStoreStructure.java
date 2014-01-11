@@ -5,8 +5,8 @@ package ch.thn.gedcom.store;
 
 import java.util.LinkedList;
 
-import ch.thn.gedcom.GedcomToString;
-import ch.thn.gedcom.data.GedcomObject;
+import ch.thn.gedcom.printer.GedcomStorePrinter;
+
 
 /**
  * A store structure has a structure name (like FAMILY_EVENT_STRUCTURE), a link 
@@ -131,7 +131,7 @@ public class GedcomStoreStructure {
 	
 	@Override
 	public String toString() {
-		return GedcomToString.preparePrint(storeBlock, 1, false).toString();
+		return GedcomStorePrinter.preparePrint(storeBlock, 1, false).toString();
 	}
 
 }

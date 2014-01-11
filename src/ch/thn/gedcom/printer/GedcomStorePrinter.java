@@ -1,25 +1,24 @@
 /**
  * 
  */
-package ch.thn.gedcom;
+package ch.thn.gedcom.printer;
 
-import java.util.LinkedList;
-
-import ch.thn.gedcom.data.GedcomBlock;
-import ch.thn.gedcom.data.GedcomLine;
-import ch.thn.gedcom.data.GedcomStructureLine;
-import ch.thn.gedcom.data.GedcomTagLine;
+import ch.thn.gedcom.GedcomFormatter;
 import ch.thn.gedcom.store.GedcomStore;
 import ch.thn.gedcom.store.GedcomStoreBlock;
 import ch.thn.gedcom.store.GedcomStoreLine;
 import ch.thn.gedcom.store.GedcomStoreStructure;
+import ch.thn.util.tree.TreeNode;
 
 
 /**
+ * This printer only exists since the {@link GedcomStore} and its block/line 
+ * structure has not been changed to a {@link TreeNode} construct yet.
+ * 
  * @author thomas
  *
  */
-public class GedcomToString {
+public class GedcomStorePrinter {
 	
 	/**
 	 * The delimiter between level numbers and tags, tags and ranges, etc. 
@@ -281,234 +280,6 @@ public class GedcomToString {
 		return sb;
 	}
 	
-	
-	
-	
-	/**
-	 * Prints the given block and any child lines, limited to the given level of 
-	 * child lines.
-	 * 
-	 * @param block
-	 * @param limitToLevel
-	 * @param includeStructures
-	 * @param printEmptyLines If set to <code>true</code>, empty lines are printed 
-	 * too. An empty line is a line with the value/xref set to <code>null</code> or 
-	 * with a length of 0. If a value/xref has never been set for the line it is 
-	 * not considered as an empty line. See the flag <code>printLinesWithNoValueSet</code> 
-	 * for that case.
-	 * @param printLinesWithNoValueSet If set to <code>true</code>, lines for 
-	 * which the value/xref has never been set will be printed too.
-	 * @return
-	 */
-	public static StringBuffer preparePrint(GedcomBlock block, int limitToLevel, 
-			boolean includeStructures, boolean printEmptyLines, boolean printLinesWithNoValueSet) {
-		StringBuffer sb = new StringBuffer();
-		
-		if (block == null) {
-			return null;
-		}
-		
-		LinkedList<GedcomLine> lines = block.getLines();
-		
-		//For each line
-		for (GedcomLine line : lines) {
-			sb.append(preparePrint(line, limitToLevel, includeStructures, 
-					printEmptyLines, printLinesWithNoValueSet));
-		}
-		
-		return sb;
-	}
-	
-	/**
-	 * Prints the given line and any child lines, limited to the given level of 
-	 * child lines.
-	 * 
-	 * @param line
-	 * @param limitToLevel
-	 * @param includeStructures
-	 * @param printEmptyLines
-	 * @param printLinesWithNoValueSet
-	 * @return
-	 */
-	public static StringBuffer preparePrint(GedcomLine line, int limitToLevel, 
-			boolean includeStructures, boolean printEmptyLines, boolean printLinesWithNoValueSet) {
-		StringBuffer sb = new StringBuffer();
-		
-		if (line == null) {
-			return null;
-		}
-		
-		//Is it a structure line or a tag line?
-		if (line.isStructureLine()) {
-			GedcomStructureLine structureLine = line.getAsStructureLine();
-			
-			if (includeStructures) {
-				sb.append(preparePrint(structureLine.getChildBlock(), limitToLevel, 
-						includeStructures, printEmptyLines, printLinesWithNoValueSet));			
-			} else {
-				sb.append(preparePrint(structureLine) + TERMINATOR);
-			}
-		} else {
-			GedcomTagLine tagLine = line.getAsTagLine();
-			
-			if (skipLine(tagLine, printEmptyLines, printLinesWithNoValueSet)) {
-				//This line has to be skipped because of the given flags
-				return sb;
-			}
-			
-			sb.append(preparePrint(line) + TERMINATOR);
-			
-			
-			if (line.getLevel() < limitToLevel || limitToLevel == 0) {
-				//Add children if there are any and if there is no level restriction
-				
-				if (tagLine.hasChildLines()) {
-					
-					LinkedList<GedcomLine> children = tagLine.getChildBlock().getLines();
-					for (GedcomLine l : children) {
-						sb.append(preparePrint(l, limitToLevel, includeStructures, 
-								printEmptyLines, printLinesWithNoValueSet));
-					}
-				}
-				
-			}
-			
-			
-		}
-
-		
-		
-		return sb;
-	}
-	
-	/**
-	 * Prints only the given line
-	 * 
-	 * @param line
-	 * @return
-	 */
-	public static StringBuffer preparePrint(GedcomLine line) {
-		StringBuffer sb = new StringBuffer();
-		
-		if (line == null) {
-			return null;
-		}
-		
-		sb.append(GedcomFormatter.makeInset(line.getLevel()));
-		sb.append(line.getLevel());
-		
-		if (line.isTagLine()) {
-			GedcomTagLine tagLine = line.getAsTagLine();
-			
-			//TAG before XREF
-			if (tagLine.getStoreLine().hasTagBeforeXRef()) {
-				sb.append(DELIM + tagLine.getTag());
-			}
-			
-			// XREF
-			if (tagLine.requiresXRef()) {
-				sb.append(DELIM + "@" + tagLine.getXRef() + "@");
-			}
-			
-			//TAG after XREF
-			if (tagLine.getStoreLine().hasTagAfterXRef()) {
-				sb.append(DELIM + tagLine.getTag());
-			}
-			
-			//VALUE
-			if (tagLine.requiresValue()) {
-				sb.append(DELIM + tagLine.getValue());
-			}
-		} else {
-			GedcomStructureLine structureLine = line.getAsStructureLine();
-			
-			sb.append(DELIM + "<<" + structureLine.getStoreLine().getStructureName() + ">>");
-		}
-				
-		
-		return sb;
-	}
-	
-	
-	/**
-	 * Checks if the line has to be skipped. A line has to be skipped if value/xref 
-	 * are required but not set/empty (depending on the given flags)
-	 * 
-	 * @param line
-	 * @param printEmptyLines
-	 * @param printLinesWithNoValueSet
-	 * @return
-	 */
-	private static boolean skipLine(GedcomLine line, boolean printEmptyLines, 
-			boolean printLinesWithNoValueSet) {
-		boolean skip = false;
-		
-		if (line.isTagLine()) {
-			GedcomTagLine tagLine = line.getAsTagLine();
-			
-			if (!printEmptyLines) {
-				//Skip empty lines
-				if ((!tagLine.requiresValue() && !tagLine.requiresXRef()) 
-						|| ((tagLine.isValueSet() || tagLine.isXRefSet()) 
-							&& tagLine.isEmpty())) {
-					skip = true;
-				}
-			}
-			
-			if (!printLinesWithNoValueSet) {
-				//Skip lines which have no value and xref set
-				if (!tagLine.isValueSet() && !tagLine.isXRefSet()) {
-					skip = true;
-				}
-			}
-		} else {
-			//Its a structure line
-			
-		}
-		
-		//Any child lines which shouldn't be skipped? If yes, then this line 
-		//should not be skipped because otherwise the child line with content 
-		//will not be printed. If all the child lines can be skipped, this line 
-		//does not need to be printed either if skip has already been set to true
-		
-		if (line.hasChildLines()) {
-			LinkedList<GedcomLine> lines = line.getChildBlock().getLines();
-			
-			for (GedcomLine blockLine : lines) {
-				
-				if (blockLine.isStructureLine()) {
-					for (GedcomLine l : blockLine.getAsStructureLine().getChildBlock().getLines()) {
-						if (!skipLine(l, printEmptyLines, printLinesWithNoValueSet)) {
-							//A tag line found which should not be skipped
-							return false;
-						} else {
-							//If it is a structure line, just pass the skip state 
-							//on to the caller (structure lines are not considered 
-							//when checking if lines have to be skipped or not)
-							if (line.isStructureLine()) {
-								return true;
-							}
-						}
-					}
-				} else {
-					if (!skipLine(blockLine, printEmptyLines, printLinesWithNoValueSet)) {
-						//A tag line found which should not be skipped
-						return false;
-					} else {
-						//If it is a structure line, just pass the skip state 
-						//on to the caller (structure lines are not considered 
-						//when checking if lines have to be skipped or not)
-						if (line.isStructureLine()) {
-							return true;
-						}
-					}
-				}
-				
-			}
-		}
-		
-		return skip;
-	}
 	
 
 }

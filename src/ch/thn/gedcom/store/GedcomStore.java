@@ -14,10 +14,10 @@ import java.util.LinkedList;
 
 import ch.thn.gedcom.GedcomFormatter;
 import ch.thn.gedcom.GedcomHelper;
-import ch.thn.gedcom.GedcomToString;
-import ch.thn.gedcom.data.GedcomBlock;
+import ch.thn.gedcom.data.GedcomAccessError;
 import ch.thn.gedcom.data.GedcomCreationError;
-import ch.thn.gedcom.data.GedcomLine;
+import ch.thn.gedcom.data.GedcomTree;
+import ch.thn.gedcom.printer.GedcomStorePrinter;
 import ch.thn.util.StringUtil;
 
 /**
@@ -396,111 +396,102 @@ public class GedcomStore {
 	
 	
 	/**
-	 * Gets an instance of the {@link GedcomBlock} with the given structure name. This 
+	 * Creates a {@link GedcomTree} with the given gedcom structure. This 
 	 * method only works if the structure does not have multiple variations.<br>
 	 * If there the structure has multiple variations, use 
-	 * {@link #getGedcomBlock(String, String, int)}
+	 * {@link #getGedcomTree(String, String, int)}
 	 * 
 	 * @param structureName
-	 * @param copyMode
 	 * @return
 	 */
-	public GedcomBlock getGedcomBlock(String structureName, int copyMode) {
-		return getGedcomBlock(null, structureName, null, copyMode, false, false, false);
+	public GedcomTree getGedcomTree(String structureName) {
+		return new GedcomTree(getGedcomStructure(structureName, null, false, false, false), null);
 	}
 	
 	/**
-	 * Gets an instance of the {@link GedcomBlock} with the given structure name and 
-	 * the variation defined with the given tag. Only works if each variation is 
-	 * defined with a different tag.<br>
+	 * Creates a {@link GedcomTree} with the given gedcom structure and 
+	 * the variation defined with the given tag.<br>
+	 * Only works if each variation is defined with a different tag.
 	 * If there are multiple variations with the same tag, which differ only by 
 	 * the presence of the xref/value fields, use 
-	 * {@link #getGedcomBlock(String, String, boolean, boolean, int)}
+	 * {@link #getGedcomLine(String, String, boolean, boolean, int)}
 	 * 
 	 * 
 	 * @param structureName
 	 * @param tag
-	 * @param copyMode
 	 * @return
 	 */
-	public GedcomBlock getGedcomBlock(String structureName, String tag, int copyMode) {
-		return getGedcomBlock(null, structureName, tag, copyMode, false, false, false);
+	public GedcomTree getGedcomTree(String structureName, String tag) {
+		return new GedcomTree(getGedcomStructure(structureName, tag, false, false, false), tag);
 	}
 	
 	/**
-	 * Gets an instance of the {@link GedcomBlock} with the given structure name and 
-	 * the variation defined with the given tag and the xref/value fields. This method 
-	 * searches through all available variations and returns the {@link GedcomBlock} which 
-	 * matches the given xref/variable requirements.
+	 * Creates a {@link GedcomTree} with the given gedcom structure and 
+	 * the variation defined with the given tag and the xref/value fields.<br>
+	 * This method searches through all available variations and returns the 
+	 * {@link GedcomLine} which matches the given xref/variable requirements.
 	 * 
 	 * @param structureName
 	 * @param tag
 	 * @param withXRef
 	 * @param withValue
-	 * @param copyMode
 	 * @return
 	 */
-	public GedcomBlock getGedcomBlock(String structureName, String tag, boolean withXRef,
-			boolean withValue, int copyMode) {
-		return getGedcomBlock(null, structureName, tag, copyMode, true, withXRef, withValue);
+	public GedcomTree getGedcomTree(String structureName, String tag, boolean withXRef,
+			boolean withValue) {
+		return new GedcomTree(getGedcomStructure(structureName, tag, true, withXRef, withValue), tag);
 	}
 	
 	/**
 	 * <i>For internal use!</i><br>
 	 * <br>
-	 * Gets an instance of a {@link GedcomBlock}. The parent line of the gedcom 
-	 * block will be the one given with <code>parentLine</code>.
+	 * Creates a {@link GedcomTree} with the given gedcom structure and variation.
 	 * 
-	 * @param parentLine
 	 * @param structureName
 	 * @param tag
-	 * @param copyMode
 	 * @param lookForXRefAndValueVariation
 	 * @param withXRef
 	 * @param withValue
 	 * @return
 	 */
-	public GedcomBlock getGedcomBlock(GedcomLine parentLine, String structureName, String tag, 
-			int copyMode, boolean lookForXRefAndValueVariation, boolean withXRef, boolean withValue) {
+	public GedcomStoreStructure getGedcomStructure(String structureName, String tag, 
+			boolean lookForXRefAndValueVariation, boolean withXRef, boolean withValue) {
 		
-		if (idToVariationsLinks.containsKey(structureName)) {
+		if (!idToVariationsLinks.containsKey(structureName)) {
+			throw new GedcomAccessError("Structure with name " + structureName + " does not exist");
+		}
 			
-			if (tag == null) {
-				//The line ID can only be omitted if there is only one variation available
-				if (variations.get(structureName).size() == 1) {
-					//There is only one variation available -> get the first line ID 
-					//of the first variation
-					tag = variations.get(structureName).get(0).getStoreBlock().getAllLineIDs().get(0);
-				} else {
-					throw new GedcomCreationError("Can not get structure " + structureName + 
-							" with only the structure name. " +
-							"This structure has multiple variations " + 
-							GedcomFormatter.makeOrList(new LinkedList<String>(idToVariationsLinks.get(structureName).keySet()), "", "") + ".");
-				}
+		if (tag == null) {
+			//The line ID can only be omitted if there is only one variation available
+			if (variations.get(structureName).size() == 1) {
+				//There is only one variation available -> get the first line ID 
+				//of the first variation
+				tag = variations.get(structureName).get(0).getStoreBlock().getAllLineIDs().get(0);
+			} else {
+				throw new GedcomCreationError("Can not get structure " + structureName + 
+						" with only the structure name. " +
+						"This structure has multiple variations " + 
+						GedcomFormatter.makeOrList(new LinkedList<String>(idToVariationsLinks.get(structureName).keySet()), "", "") + ".");
 			}
-			
-			if (!idToVariationsLinks.get(structureName).containsKey(tag)) {
-				throw new GedcomCreationError("Structure " + structureName + 
-						" with line ID " + tag + " does not exist.");
-			}
-			
-			int variation = 0;
-			
-			if (lookForXRefAndValueVariation) {
-				variation = lookForXRefAndValueVariation(idToVariationsLinks.get(structureName)
-						.get(tag), structureName, tag, withXRef, withValue);
-				
-				if (variation == -1) {
-					return null;
-				}
-			}
-			
-			return idToVariationsLinks.get(structureName).get(tag).get(variation)
-					.getStoreBlock().getBlockInstance(parentLine, tag, copyMode);
-			
 		}
 		
-		return null;
+		if (!idToVariationsLinks.get(structureName).containsKey(tag)) {
+			throw new GedcomCreationError("Structure " + structureName + 
+					" with line ID " + tag + " does not exist.");
+		}
+		
+		int variation = 0;
+		
+		if (lookForXRefAndValueVariation) {
+			variation = lookForXRefAndValueVariation(idToVariationsLinks.get(structureName)
+					.get(tag), structureName, tag, withXRef, withValue);
+			
+			if (variation == -1) {
+				return null;
+			}
+		}
+		
+		return idToVariationsLinks.get(structureName).get(tag).get(variation);
 	}
 	
 	
@@ -656,7 +647,7 @@ public class GedcomStore {
 	
 	@Override
 	public String toString() {
-		return GedcomToString.preparePrint(this, 1, false).toString();
+		return GedcomStorePrinter.preparePrint(this, 1, false).toString();
 	}
 
 }

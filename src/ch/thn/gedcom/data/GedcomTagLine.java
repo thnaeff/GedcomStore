@@ -6,15 +6,12 @@ package ch.thn.gedcom.data;
 import java.util.HashSet;
 
 import ch.thn.gedcom.GedcomFormatter;
-import ch.thn.gedcom.GedcomToString;
 import ch.thn.gedcom.store.GedcomStoreLine;
 
+
 /**
- * A tag line has one tag name can hold values and xrefs. The tag name can either 
- * appear before the xref/value field or after.
- * 
  * @author thomas
- * @see GedcomObject
+ *
  */
 public class GedcomTagLine extends GedcomLine {
 	
@@ -28,39 +25,28 @@ public class GedcomTagLine extends GedcomLine {
 	
 
 	/**
-	 * Creates a new tag line out ot the given store line and with the given tag 
-	 * and parent block
-	 * 
-	 * @param storeLine
-	 * @param parentBlock
+	 * @param getStoreLine()
 	 * @param tag
-	 * @param copyMode
 	 */
-	public GedcomTagLine(GedcomStoreLine storeLine, GedcomBlock parentBlock, String tag, int copyMode) {
-		super(storeLine, parentBlock);
+	public GedcomTagLine(GedcomStoreLine storeLine, String tag) {
+		super(storeLine, tag);
 		
-		if (storeLine.hasTagBeforeXRef()) {
+		if (getStoreLine().hasTagBeforeXRef()) {
 			tag1 = tag;
 		} else {
 			tag2 = tag;
 		}
 		
-		
-		if (storeLine.hasChildBlock()) {
-			//Copy mandatory or all lines if necessary
-			if (copyMode == GedcomBlock.ADD_MANDATORY && storeLine.getChildBlock().hasMandatoryLines()) {
-				//Copy mandatory
-				setChildBlock(new GedcomBlock(storeLine.getChildBlock(), this, null, copyMode));
-			} else if (copyMode == GedcomBlock.ADD_ALL) {
-				//Copy all
-				setChildBlock(new GedcomBlock(storeLine.getChildBlock(), this, null, copyMode));
-			} else {
-				//Add empty block
-				setChildBlock(new GedcomBlock(storeLine.getChildBlock(), this, copyMode));
-			}
+	}
+	
+	
+	@Override
+	public String getTag() {
+		if (tag1 != null) {
+			return tag1;
+		} else {
+			return tag2;
 		}
-		
-		
 	}
 	
 	/**
@@ -83,35 +69,6 @@ public class GedcomTagLine extends GedcomLine {
 	 */
 	protected void isXRefSet(boolean isXRefSet) {
 		this.isXRefSet = isXRefSet;
-	}
-	
-	/**
-	 * Returns the tag name of this line
-	 * 
-	 * @return
-	 */
-	public String getTag() {
-		if (tag1 != null) {
-			return tag1;
-		} else {
-			return tag2;
-		}
-	}
-	
-	
-	@Override
-	public String getId() {
-		return getTag();
-	}
-	
-	
-	@Override
-	public int getLevel() {
-		if (getParentLine() == null) {
-			return 0;
-		}
-		
-		return getParentLine().getLevel() + 1;
 	}
 	
 	/**
@@ -227,11 +184,16 @@ public class GedcomTagLine extends GedcomLine {
 		return (tag2 != null);
 	}
 	
-	@Override
+	/**
+	 * Sets the value field of this tag line
+	 * 
+	 * @param value
+	 * @return
+	 */
 	public GedcomTagLine setValue(String value) {
 		if (!getStoreLine().hasValueNames()) {
-			throw new GedcomAccessError("Line " + getTag() + " under " + getParentLine().getId() + 
-					" in " + getStoreLine().getParentBlock().getStoreStructure().getStructureName() + 
+			throw new GedcomAccessError("Line " + getTag() + " in " + 
+					getStoreLine().getParentBlock().getStoreStructure().getStructureName() + 
 					" does not have an value-field.");
 		}
 		
@@ -239,13 +201,8 @@ public class GedcomTagLine extends GedcomLine {
 		
 		if (possibleValues.size() > 0 && !possibleValues.contains(value)) {
 			throw new GedcomAccessError(value + " is not a possible value for line " + 
-					getTag() + " under " + getParentLine().getId() + 
-					" in " + getStoreLine().getParentBlock().getStoreStructure().getStructureName() + 
+					getTag() + " in " + getStoreLine().getParentBlock().getStoreStructure().getStructureName() + 
 					". Possible values are: " + GedcomFormatter.makeOrList(possibleValues, "", ""));
-		}
-		
-		if (showAccessOutput()) {
-			System.out.println(getId() + ": " + this.value + " => " + value);
 		}
 		
 		this.value = value;
@@ -253,16 +210,17 @@ public class GedcomTagLine extends GedcomLine {
 		return this;
 	}
 	
-	@Override
+	/**
+	 * Sets the xref field of this tag line
+	 * 
+	 * @param xref
+	 * @return
+	 */
 	public GedcomTagLine setXRef(String xref) {
 		if (!getStoreLine().hasXRefNames()) {
-			throw new GedcomAccessError("[ERROR] Line " + getTag() + " under " + getParentLine().getId() + 
-					" in " + getStoreLine().getParentBlock().getStoreStructure().getStructureName() + 
+			throw new GedcomAccessError("[ERROR] Line " + getTag() + " in " + 
+					getStoreLine().getParentBlock().getStoreStructure().getStructureName() + 
 					" does not have an xref-field.");
-		}
-		
-		if (showAccessOutput()) {
-			System.out.println(getId() + ": " + this.xref + " => " + xref);
 		}
 		
 		this.xref = xref;
@@ -270,7 +228,11 @@ public class GedcomTagLine extends GedcomLine {
 		return this;
 	}
 	
-	@Override
+	
+	/**
+	 * Clears all the values of this tag line and resets the flag which indicates 
+	 * if a value for this line has been set.
+	 */
 	public void clear() {
 		xref = null;
 		value = null;
@@ -278,30 +240,82 @@ public class GedcomTagLine extends GedcomLine {
 		isXRefSet(false);
 	}
 	
+	
+	/**
+	 * 
+	 * 
+	 * @return
+	 */
 	@Override
-	public boolean isLine() {
-		return true;
+	public String getId() {
+		return getTag();
 	}
 	
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		
+		//TAG before XREF
+		if (getStoreLine().hasTagBeforeXRef()) {
+			sb.append(getTag());
+		}
+		
+		// XREF
+		if (requiresXRef()) {
+			if (sb.length() > 0) {
+				sb.append(DELIM);
+			}
+			
+			sb.append("@" + xref + "@");
+		}
+		
+		//TAG after XREF
+		if (getStoreLine().hasTagAfterXRef()) {
+			if (sb.length() > 0) {
+				sb.append(DELIM);
+			}
+			
+			sb.append(getTag());
+		}
+		
+		//VALUE
+		if (requiresValue()) {
+			if (sb.length() > 0) {
+				sb.append(DELIM);
+			}
+			
+			sb.append(value);
+		}
+				
+		
+		return sb.toString();
+	}
+
+
 	@Override
 	public boolean isTagLine() {
 		return true;
 	}
-	
+
+
 	@Override
 	public GedcomTagLine getAsTagLine() {
 		return this;
 	}
-	
+
+
 	@Override
-	public String toString() {
-		StringBuffer sb = GedcomToString.preparePrint(this);
-		
-		if (sb.length() == 0) {
-			sb.append("Empty tag line " + getTag());
-		}
-		
-		return sb.toString();
+	public boolean isStructureLine() {
+		return false;
+	}
+
+
+	@Override
+	public GedcomStructureLine getAsStructureLine() {
+		throw new IllegalAccessError("This is not a " + GedcomStructureLine.class.getSimpleName());
 	}
 	
+	
+
 }
