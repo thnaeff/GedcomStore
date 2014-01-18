@@ -254,6 +254,15 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 	}
 	
 	/**
+	 * Returns the value of the line at this node
+	 * 
+	 * @return 
+	 */
+	public String getTagLineValue() {
+		return getNodeValue().getAsTagLine().getValue();
+	}
+	
+	/**
 	 * Sets the xref of this node
 	 * 
 	 * @param xref
@@ -266,6 +275,15 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 		
 		getNodeValue().getAsTagLine().setXRef(xref);
 		return this;
+	}
+	
+	/**
+	 * Returns the xref of the line at this node
+	 * 
+	 * @return 
+	 */
+	public String getTagLineXRef() {
+		return getNodeValue().getAsTagLine().getXRef();
 	}
 
 	/**
