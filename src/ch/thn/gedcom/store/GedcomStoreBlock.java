@@ -269,6 +269,15 @@ public class GedcomStoreBlock {
 	}
 	
 	/**
+	 * Returns <code>true</code> if this block has one or more child lines
+	 * 
+	 * @return
+	 */
+	public boolean hasChildLines() {
+		return (storeLines.size() > 0);
+	}
+	
+	/**
 	 * Returns <code>true</code> if this block has one or more mandatory lines
 	 * 
 	 * @return

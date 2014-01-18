@@ -21,7 +21,7 @@ public class GedcomTree extends GedcomNode {
 	 * @param tag
 	 */
 	public GedcomTree(GedcomStoreStructure storeStructure, String tag) {
-		super(storeStructure.getStoreBlock());
+		super(storeStructure);
 		
 		this.structureName = storeStructure.getStructureName();
 		
@@ -36,7 +36,7 @@ public class GedcomTree extends GedcomNode {
 	
 	@Override
 	public String print() {
-		return getStructureName();
+		return structureName;
 	}
 
 }

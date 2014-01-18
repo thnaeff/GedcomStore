@@ -26,8 +26,9 @@ public abstract class GedcomLine {
 	 * 
 	 * @param storeLine
 	 * @param tag
+	 * @param parent
 	 */
-	public GedcomLine(GedcomStoreLine storeLine, String tag) {
+	public GedcomLine(GedcomStoreLine storeLine, String tag, GedcomNode parent) {
 		this.storeLine = storeLine;
 		this.tag = tag;
 	}
@@ -57,13 +58,21 @@ public abstract class GedcomLine {
 		return tag;
 	}
 	
-	public abstract boolean isTagLine();
+	public boolean isTagLine() {
+		return false;
+	}
 	
-	public abstract GedcomTagLine getAsTagLine();
+	public GedcomTagLine getAsTagLine() {
+		throw new IllegalAccessError("This is not a " + GedcomTagLine.class.getSimpleName());
+	}
 	
-	public abstract boolean isStructureLine();
+	public boolean isStructureLine() {
+		return false;
+	}
 	
-	public abstract GedcomStructureLine getAsStructureLine();
+	public GedcomStructureLine getAsStructureLine() {
+		throw new IllegalAccessError("This is not a " + GedcomStructureLine.class.getSimpleName());
+	}
 	
 	
 }

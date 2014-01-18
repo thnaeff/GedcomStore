@@ -8,6 +8,9 @@ import ch.thn.util.tree.printer.HTMLTreePrinter;
 import ch.thn.util.tree.printer.TreePrinter;
 
 /**
+ * This gedcom data printer prints the HTML code to view the gedcom structure 
+ * as HTML file, for example in a web browser.
+ * 
  * @author thomas
  *
  */
@@ -15,7 +18,8 @@ public class GedcomStructureHTMLPrinter extends HTMLTreePrinter<String, GedcomLi
 
 	
 	public GedcomStructureHTMLPrinter(String treeTitle) {
-		super(treeTitle, false, true, null);
+		//Do not use colors since the tree lines are not shown anyways
+		super(treeTitle, false, true, true, null);
 		
 		CONNECTOR_HEAD = "";
 		CONNECTOR_START = "";

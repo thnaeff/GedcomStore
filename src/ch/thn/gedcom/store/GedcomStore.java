@@ -557,7 +557,7 @@ public class GedcomStore {
 	
 	
 	/**
-	 * Returns the number of variatinons for the structure with the given name
+	 * Returns the number of variations for the structure with the given name
 	 * 
 	 * @param structureName
 	 * @return

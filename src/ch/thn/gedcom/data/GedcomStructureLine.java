@@ -17,9 +17,10 @@ public class GedcomStructureLine extends GedcomLine {
 	 * 
 	 * @param storeLine
 	 * @param tag
+	 * @param parent
 	 */
-	public GedcomStructureLine(GedcomStoreLine storeLine, String tag) {
-		super(storeLine, tag);
+	public GedcomStructureLine(GedcomStoreLine storeLine, String tag, GedcomNode parent) {
+		super(storeLine, tag, parent);
 		
 		if (!storeLine.hasStructureName()) {
 			throw new GedcomAccessError("The store line " + storeLine.getId() + 
@@ -43,18 +44,6 @@ public class GedcomStructureLine extends GedcomLine {
 	@Override
 	public String toString() {
 		return getStructureName();
-	}
-
-
-	@Override
-	public boolean isTagLine() {
-		return false;
-	}
-
-
-	@Override
-	public GedcomTagLine getAsTagLine() {
-		throw new IllegalAccessError("This is not a " + GedcomTagLine.class.getSimpleName());
 	}
 
 
