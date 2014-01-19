@@ -226,6 +226,102 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 		
 		return newNode;
 	}
+	
+	/**
+	 * Returns the parent line of this line
+	 * 
+	 * @return
+	 */
+	public GedcomNode getParentLine() {
+		return (GedcomNode)getParentNode();
+	}
+	
+	/**
+	 * Returns the child line with the given tag or structure name. Since there 
+	 * can be more than one line with the same tag or structure name, its line number 
+	 * has to be given.
+	 * 
+	 * @param tagOrStructureName
+	 * @param index
+	 * @return
+	 */
+	public GedcomNode getChildLine(String tagOrStructureName, int lineNumber) {
+		return (GedcomNode)getChildNode(tagOrStructureName, lineNumber);
+	}
+	
+	/**
+	 * Returns the child line with the given structure name and tag variation
+	 * 
+	 * @param structureName
+	 * @param tag
+	 * @param lineNumber
+	 * @return
+	 */
+	public GedcomNode getChildLine(String structureName, String tag, int lineNumber) {
+		return getChildLine(structureName, tag, false, false, false, lineNumber);
+	}
+	
+	/**
+	 * Returns the child line with the given structure name and variation
+	 * 
+	 * @param structureName
+	 * @param tag
+	 * @param withXRef
+	 * @param withValue
+	 * @param lineNumber
+	 * @return
+	 */
+	public GedcomNode getChildLine(String structureName, String tag, 
+			boolean withXRef, boolean withValue, int lineNumber) {
+		return getChildLine(structureName, tag, true, withXRef, withValue, lineNumber);
+	}
+	
+	/**
+	 * 
+	 * 
+	 * @param structureName
+	 * @param tag
+	 * @param lookForXRefAndValueVariation
+	 * @param withXRef
+	 * @param withValue
+	 * @param lineNumber
+	 * @return
+	 */
+	private GedcomNode getChildLine(String structureName, String tag, 
+			boolean lookForXRefAndValueVariation, boolean withXRef, boolean withValue, int lineNumber) {
+		
+		LinkedList<TreeNode<String, GedcomLine>> children = getChildNodes(structureName);
+		
+		if (children.size() == 0) {
+			return null;
+		}
+		
+		int matchCount = -1;
+		
+		//Search for the child node which matches the parameters
+		for (TreeNode<String, GedcomLine> child : children) {
+			if (structureName.equals(((GedcomNode)child).getTagOrStructureName())
+					&& tag.equals(((GedcomNode)child).getTag())) {
+				matchCount++;;
+			}
+			
+			if (matchCount > 0 && lookForXRefAndValueVariation) {
+				if (withXRef == ((GedcomNode)child).getWithXRef() 
+						&& withValue == ((GedcomNode)child).getWithValue()) {
+					//Keep the match count
+				} else {
+					//Not a match with xref and value -> get rid of match
+					matchCount--;
+				}
+			}
+			
+			if (matchCount == lineNumber) {
+				return (GedcomNode) child;
+			}
+		}
+		
+		return null;
+	}
 
 	/**
 	 * 
@@ -815,9 +911,9 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 			} else {
 				//Follow path
 				if (pp.tag == null) {
-					currentNode = currentNode.followSimplePath(pp.tagOrStructureName, pp.lineNumber);
+					currentNode = currentNode.getChildLine(pp.tagOrStructureName, pp.lineNumber);
 				} else {
-					currentNode = currentNode.followStructurePath(pp.tagOrStructureName, pp.tag, 
+					currentNode = currentNode.getChildLine(pp.tagOrStructureName, pp.tag, 
 							pp.lookForXRefAndValueVariation, pp.withXRef, pp.withValue, pp.lineNumber);
 				}
 				
@@ -853,60 +949,6 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 		}
 		
 		return currentNode;
-	}
-	
-	/**
-	 * 
-	 * 
-	 * @param tagOrStructureName
-	 * @param lineNumber
-	 * @return
-	 */
-	protected GedcomNode followSimplePath(String tagOrStructureName, int lineNumber) {
-		return (GedcomNode)getChildNode(tagOrStructureName, lineNumber);
-	}
-	
-	/**
-	 * 
-	 * 
-	 * @param structureName
-	 * @param tag
-	 * @param lookForXRefAndValueVariation
-	 * @param withXRef
-	 * @param withValue
-	 * @param lineNumber
-	 * @return
-	 */
-	protected GedcomNode followStructurePath(String structureName, String tag, 
-			boolean lookForXRefAndValueVariation, boolean withXRef, boolean withValue, int lineNumber) {
-		
-		LinkedList<TreeNode<String, GedcomLine>> children = getChildNodes();
-		
-		int matchCount = -1;
-		
-		//Search for the child node which matches the parameters
-		for (TreeNode<String, GedcomLine> child : children) {
-			if (structureName.equals(((GedcomNode)child).getTagOrStructureName())
-					&& tag.equals(((GedcomNode)child).getTag())) {
-				matchCount++;;
-			}
-			
-			if (matchCount > 0 && lookForXRefAndValueVariation) {
-				if (withXRef == ((GedcomNode)child).getWithXRef() 
-						&& withValue == ((GedcomNode)child).getWithValue()) {
-					//Keep the match count
-				} else {
-					//Not a match with xref and value -> get rid of match
-					matchCount--;
-				}
-			}
-			
-			if (matchCount == lineNumber) {
-				return (GedcomNode) child;
-			}
-		}
-		
-		return null;
 	}
 	
 	
