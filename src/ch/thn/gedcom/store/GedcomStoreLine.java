@@ -237,7 +237,8 @@ public class GedcomStoreLine {
 	
 	/**
 	 * Returns the store structure if there is one. <code>NULL</code> is returned 
-	 * if there is no store structure or if multiple variations are available.
+	 * if there is no store structure or if multiple variations are available.<br>
+	 * <b>Note: </b>Only if this is a structure line the store structure can be retrieved.
 	 * 
 	 * @return
 	 */
@@ -257,6 +258,25 @@ public class GedcomStoreLine {
 		return storeStructures.get(0);
 	}
 	
+	/**
+	 * Returns <code>true</code> if this store line has multiple variations.<br>
+	 * <b>Note: </b>Only a structure line can have variations.
+	 * 
+	 * @return
+	 */
+	public boolean hasVariations() {
+		if (structureName == null) {
+			return false;
+		}
+		
+		return (parentBlock.getStoreStructure().getStore().getVariations(structureName).size() > 1);
+	}
+	
+	/**
+	 * 
+	 * 
+	 * @return
+	 */
 	protected String getOriginalGedcomDefinitionLine() {
 		return originalGedcomDefinitionLine;
 	}

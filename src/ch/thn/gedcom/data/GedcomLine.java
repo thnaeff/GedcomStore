@@ -71,21 +71,46 @@ public abstract class GedcomLine {
 		return tag;
 	}
 	
+	/**
+	 * 
+	 * 
+	 * @return
+	 */
 	public boolean isTagLine() {
 		return false;
 	}
 	
+	/**
+	 * 
+	 * 
+	 * @return
+	 */
 	public GedcomTagLine getAsTagLine() {
 		throw new IllegalAccessError("This is not a " + GedcomTagLine.class.getSimpleName());
 	}
 	
+	/**
+	 * 
+	 * 
+	 * @return
+	 */
 	public boolean isStructureLine() {
 		return false;
 	}
 	
+	/**
+	 * 
+	 * 
+	 * @return
+	 */
 	public GedcomStructureLine getAsStructureLine() {
 		throw new IllegalAccessError("This is not a " + GedcomStructureLine.class.getSimpleName());
 	}
 	
+	
+	@Override
+	public String toString() {
+		return storeLine.getId() + " (" + tag + ")";
+	}
 	
 }

@@ -56,7 +56,11 @@ public class GedcomStructureLine extends GedcomLine {
 	
 	@Override
 	public String toString() {
-		return getStructureName();
+		if (getTag() != null) {
+			return getStructureName() + " (" + getTag() + ")";
+		} else {
+			return getStructureName();
+		}
 	}
 
 

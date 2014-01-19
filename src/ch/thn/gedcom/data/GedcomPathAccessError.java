@@ -29,15 +29,28 @@ public class GedcomPathAccessError extends GedcomError {
 
         private String[] accessPath = null;
         
+        private int pathIndex = 0;
+        
         /**
          *
          *
          * @param accessPath The path which caused the error
+         * @param pathIndex The index of the path where the error occurred
          * @param message The error message
          */
-        public GedcomPathAccessError(String[] accessPath, String message) {
+        public GedcomPathAccessError(String[] accessPath, int pathIndex, String message) {
                 super(message);
+                this.pathIndex = pathIndex;
                 this.accessPath = accessPath;
+        }
+        
+        /**
+         * 
+         * 
+         * @return
+         */
+        public int getPathIndex() {
+        	return pathIndex;
         }
         
         /**

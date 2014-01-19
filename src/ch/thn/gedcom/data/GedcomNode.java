@@ -16,6 +16,7 @@
  */
 package ch.thn.gedcom.data;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 
 import ch.thn.gedcom.GedcomFormatter;
@@ -64,7 +65,7 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 	protected GedcomNode(GedcomStoreBlock storeBlock, String tagOrStructureName, 
 			String tag, boolean lookForXRefAndValueVariation, boolean withXRef, boolean withValue) {
 		super(tagOrStructureName, null);
-		
+
 		this.tagOrStructureName = tagOrStructureName;
 		this.tag = tag;
 		this.lookForXRefAndValueVariation = lookForXRefAndValueVariation;
@@ -114,6 +115,7 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 	protected GedcomNode(GedcomStoreStructure storeStructure) {
 		super(storeStructure.getStoreBlock().getStoreStructure().getStructureName(), null);
 		this.storeBlock = storeStructure.getStoreBlock();
+		this.tagOrStructureName = storeStructure.getStoreBlock().getStoreStructure().getStructureName();
 	}
 
 	/**
@@ -470,6 +472,108 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 		return storeLine.getMax();
 	}
 	
+	/**
+	 * Adds all the lines which are available for this node. However, some 
+	 * structures which have multiple variations can not be added automatically 
+	 * because the user has to make the decision which variation should be added.
+	 * 
+	 * @param recursive If this flag is set to <code>true</code>, all child lines 
+	 * are also added for each added line -> the whole tree is built.
+	 */
+	public void addAllChildLines(boolean recursive) {
+		if (storeBlock == null) {
+			return;
+		}
+		
+		LinkedList<GedcomStoreLine> allLines = storeBlock.getStoreLines();
+		for (GedcomStoreLine line : allLines) {
+			try {
+				if (recursive) {
+					GedcomNode node = addChildLine(line);
+					
+					if (node != null) {
+						node.addAllChildLines(recursive);
+					}
+				} else {
+					addChildLine(line);
+				}
+			} catch (GedcomCreationError e) {
+				//No warnings when adding all the lines
+//				e.printStackTrace();
+			}
+		}
+	}
+	
+	/**
+	 * Adds all the lines which are defined as mandatory in the gedcom lineage-linked 
+	 * grammar for this node. However, some structures which have multiple variations 
+	 * can not be added automatically because the user has to make the decision 
+	 * which variation should be added.
+	 * 
+	 * @param recursive If this flag is set to <code>true</code>, all mandatory child lines 
+	 * are also added for each added line -> the whole tree is built with mandatory lines.
+	 */
+	public void addMandatoryChildLines(boolean recursive) {
+		if (storeBlock == null) {
+			return;
+		}
+		
+		LinkedList<GedcomStoreLine> mandatoryLines = storeBlock.getMandatoryLines();
+		for (GedcomStoreLine line : mandatoryLines) {
+			try {
+				if (recursive) {
+					GedcomNode node = addChildLine(line);
+					
+					if (node != null) {
+						node.addMandatoryChildLines(recursive);
+					}
+				} else {
+					addChildLine(line);
+				}
+			} catch (GedcomCreationError e) {
+				//No warnings when adding all the lines
+//				e.printStackTrace();
+			}
+		}
+	}
+	
+	/**
+	 * Tries to add the given store line. A given store line can not be added 
+	 * if it has multiple variations, because it can not make the decision 
+	 * which variation to use.
+	 * 
+	 * @param line
+	 * @return
+	 */
+	private GedcomNode addChildLine(GedcomStoreLine line) {
+		if (line.hasVariations()) {
+			throw new GedcomCreationError("Can not add child line " + 
+					line.getStructureName() + ". " + 
+					"Line has multiple variations.");
+		}
+		
+		if (line.getTagNames().size() > 1) {
+			throw new GedcomCreationError("Can not add child line " + 
+					line.getTagNames() + ". " + 
+					"Line has multiple tags available.");
+		}
+		
+		String tag = null;
+		
+		if (line.getTagNames().size() == 1) {
+			tag = line.getTagNames().iterator().next();
+		}
+		
+		if (!line.hasStructureName()) {
+			return addChildLine(tag);
+		} else {
+			boolean lookForXRefAndValueVariation = line.hasVariations();
+			return addChildLine(line.getStructureName(), tag, 
+					lookForXRefAndValueVariation, line.hasXRefNames(), line.hasValueNames());
+		}
+	}
+	
+	
 	@Override
 	public boolean isInvisibleNode() {
 		if (super.isInvisibleNode()) {
@@ -564,379 +668,287 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 
 		return skip;
 	}
+	
+	/**
+	 * Tries to follow the given path. The path needs to exist in order to follow 
+	 * it.<br>
+	 * <br>
+	 * For more information about how to use the path array, read 
+	 * {@link #followPath(boolean, boolean, boolean, String...)}
+	 * 
+	 * @param path The path to follow.
+	 * @return The {@link GedcomNode} of the last object in the path, or <code>null</code> if 
+	 * following the path did not work.
+	 * @see #followPath(boolean, boolean, boolean, String...)
+	 */
+	public GedcomNode followPath(String... path) {
+		return followPath(false, false, false, path);
+	}
+	
+	/**
+	 * Tries to follow the given path. If the path does not exist, it tries to 
+	 * create the path.<br>
+	 * <br>
+	 * For more information about how to use the path array, read 
+	 * {@link #followPath(boolean, boolean, boolean, String...)}
+	 * 
+	 * @param path The path to follow.
+	 * @return The {@link GedcomNode} of the last object in the path, or <code>null</code> if 
+	 * following the path did not work.
+	 * @see #followPath(boolean, boolean, boolean, String...)
+	 */
+	public GedcomNode followPathCreate(String... path) {
+		return followPath(true, false, false, path);
+	}
+	
+	/**
+	 * Tries to follow the given path. If such a path already exists, a new path 
+	 * is created at the most end possible of the path. If no such path exists, 
+	 * it just tries to create the path.<br>
+	 * <br>
+	 * For more information about how to use the path array, read 
+	 * {@link #followPath(boolean, boolean, boolean, String...)}
+	 * 
+	 * @param path The path to follow.
+	 * @return The {@link GedcomNode} of the last object in the path, or <code>null</code> if 
+	 * following the path did not work.
+	 * @see #followPath(boolean, boolean, boolean, String...)
+	 */
+	public GedcomNode createPathEnd(String... path) {
+		return followPath(false, true, false, path);
+	}
+	
+	/**
+	 * Tries to create the given path.<br>
+	 * <br>
+	 * For more information about how to use the path array, read 
+	 * {@link #followPath(boolean, boolean, boolean, String...)}
+	 * 
+	 * @param path The path to follow.
+	 * @return The {@link GedcomNode} of the last object in the path, or <code>null</code> if 
+	 * following the path did not work.
+	 * @see #followPath(boolean, boolean, boolean, String...)
+	 */
+	public GedcomNode createPath(String... path) {
+		return followPath(false, false, true, path);
+	}
 
-
-//	/**
-//	 * Follows the path given with <code>path</code>. Each array position describes
-//	 * one path step, and each step can contain multiple values describing the
-//	 * step. The following two lines each show one step in the path with multiple
-//	 * values, separated by {@value #PATH_OPTION_DELIMITER}:<br>
-//	 * - "structure name;tag;with xref;with value;line number"<br>
-//	 * - "structure name;tag;with xref;with value"<br>
-//	 * - "tag or structure name;line number"<br>
-//	 * ("with xref" and "with value" have to be given as "true" or "false")<br>
-//	 * <br>
-//	 * If multiple step values are given, they have to be separated with the
-//	 * {@link #PATH_OPTION_DELIMITER}. Multiple step values are needed if the
-//	 * next path step can not be identified with one step value only. A tag line
-//	 * for example can be added multiple times, thus when accessing that line, the
-//	 * tag and the line number have to be given. Also, some structures exist in
-//	 * different variations (with/without xref, with/without value, ...) and might
-//	 * have to be accessed with multiple values for one path step.<br>
-//	 * If a path can not be followed, this method throws an {@link GedcomPathAccessError}
-//	 * with an error text and the path which caused the error. The error text might
-//	 * give a hint to what has gone wrong.
-//	 *
-//	 * @param path The path to follow. If pieces of the path are not yet created,
-//	 * it will try to create them
-//	 * @return The {@link GedcomNode} of the last object in the path
-//	 * @throws GedcomPathAccessError If following the given path is not possible
-//	 * @throws GedcomCreationError If new path pieces have to be created but they
-//	 * can not be created (because of invalid structure/tag names, ...)
-//	 */
-//	public GedcomNode followPath(String... path) {
-//		return followPath(false, false, path);
-//	}
-//
-//	/**
-//	 * Follows the path given with <code>path</code>. Each array position describes
-//	 * one path step, and each step can contain multiple values describing the
-//	 * step. The following two lines each show one step in the path with multiple
-//	 * values, separated by {@value #PATH_OPTION_DELIMITER}:<br>
-//	 * - "structure name;tag;with xref;with value;line number"<br>
-//	 * - "structure name;tag;with xref;with value"<br>
-//	 * - "tag or structure name;line number"<br>
-//	 * ("with xref" and "with value" have to be given as "true" or "false")<br>
-//	 * <br>
-//	 * If multiple step values are given, they have to be separated with the
-//	 * {@link #PATH_OPTION_DELIMITER}. Multiple step values are needed if the
-//	 * next path step can not be identified with one step value only. A tag line
-//	 * for example can be added multiple times, thus when accessing that line, the
-//	 * tag and the line number have to be given. Also, some structures exist in
-//	 * different variations (with/without xref, with/without value, ...) and might
-//	 * have to be accessed with multiple values for one path step.<br>
-//	 * If a path can not be followed, this method throws an {@link GedcomPathAccessError}
-//	 * with an error text and the path which caused the error. The error text might
-//	 * give a hint to what has gone wrong.
-//	 *
-//	 * @param addNew If set to <code>true</code>, a new path is created.
-//	 * <code>addNewAt</code> defines how and where the split has to be done.
-//	 * @param path The path to follow. If pieces of the path are not yet created,
-//	 * it will try to create them
-//	 * @return The {@link GedcomNode} of the last object in the path
-//	 * @throws GedcomPathAccessError If following the given path is not possible
-//	 * @throws GedcomCreationError If new path pieces have to be created but they
-//	 * can not be created (because of invalid structure/tag names, ...)
-//	 */
-//	public GedcomNode followPath(boolean addNew, String... path) {
-//		return followPath(addNew, false, path);
-//	}
-//
-//
-//	/**
-//	 * Follows the path given with <code>path</code>. Each array position describes
-//	 * one path step, and each step can contain multiple values describing the
-//	 * step. The following three lines each show one step in the path with multiple
-//	 * values, separated by {@value #PATH_OPTION_DELIMITER}:<br>
-//	 * - "structure name;tag;with xref;with value;line number"<br>
-//	 * - "structure name;tag;with xref;with value"<br>
-//	 * - "tag or structure name;line number"<br>
-//	 * ("with xref" and "with value" have to be given as "true" or "false")<br>
-//	 * <br>
-//	 * If multiple step values are given, they have to be separated with the
-//	 * {@link #PATH_OPTION_DELIMITER}. Multiple step values are needed if the
-//	 * next path step can not be identified with one step value only. A tag line
-//	 * for example can be added multiple times, thus when accessing that line, the
-//	 * tag and the line number have to be given. Also, some structures exist in
-//	 * different variations (with/without xref, with/without value, ...) and might
-//	 * have to be accessed with multiple values for one path step.<br>
-//	 * If a path can not be followed, this method throws an {@link GedcomPathAccessError}
-//	 * with an error text and the path which caused the error. The error text might
-//	 * give a hint to what has gone wrong.
-//	 *
-//	 * @param addNew If set to <code>true</code>, a new path is created.
-//	 * @param silent Just suppresses the ">>" access output
-//	 * @param path The path to follow. If pieces of the path are not yet created,
-//	 * it will try to create them
-//	 * @return The {@link GedcomNode} of the last object in the path
-//	 * @throws GedcomPathAccessError If following the given path is not possible
-//	 * @throws GedcomCreationError If new path pieces have to be created but they
-//	 * can not be created (because of invalid structure/tag names, ...)
-//	 */
-//	protected GedcomNode followPath(boolean addNew, boolean silent, String... path) {
-//		GedcomNode n = this;
-//		GedcomNode previousNode = n;
-//		GedcomNode lastNodeWithSplit = null;
-//		ArrayList<String> addNewPath = new ArrayList<String>();
-//		String pathPiece = null;
-//		int lineNumber = 0;
-//		boolean added = false;
-//
-//		if (path == null || path.length == 0) {
-//			return this;
-//		}
-//
-//		//Go through the whole given path
-//		for (int currentPathIndex = 0; currentPathIndex < path.length; currentPathIndex++) {
-//			if (!n.canHaveChildren()) {
-//				//Nothing else to do, the path ends here
-//				throw new GedcomPathAccessError(path, pathPiece + " can not have any children");
-//			}
-//
-//			lineNumber = 0;
-//
-//			String[] parts = path[currentPathIndex].split(PATH_OPTION_DELIMITER);
-//
-//			if (parts.length <= 0) {
-//				continue;
-//			}
-//
-//			pathPiece = parts[0];
-//
-//			if (pathPiece.length() == 0) {
-//				continue;
-//			}
-//
-//			previousNode = n;
-//
-//			if (n.nameIsPossibleStructure(pathPiece)) {
-//				PathObject po = followStructureLine(pathPiece, parts, lineNumber, path, n,
-//						previousNode, currentPathIndex);
-//				n = po.o;
-//
-//				if (po.added) {
-//					added = true;
-//				}
-//			} else if (n.nameIsPossibleTag(pathPiece)) {
-//				PathObject po = followTagLine(pathPiece, parts, lineNumber, path, n,
-//						previousNode, currentPathIndex);
-//				n = po.o;
-//
-//				if (po.added) {
-//					added = true;
-//				}
-//			} else {
-//				throw new GedcomPathAccessError(path, "Path piece " + pathPiece +
-//						" does not exist in " + getNodeKey() + ". Possible line id's: " +
-//						GedcomFormatter.makeOrList(previousNode.getStoreBlock().getAllLineIDs(), "", ""));
-//			}
-//
-//			//Keep a record of the last line where splitting (adding another line)
-//			//would be possible.
-//			//If a new line has already been added in the path, do not care about this any more
-//			if (addNew) {
-//				if (!added && (n.getMaxNumberOfLines() == 0
-//						|| n.getNumberOfChildNodes() < n.getMaxNumberOfLines())) {                                
-//					lastNodeWithSplit = n;
-//					addNewPath.clear();
-//				} else {
-//					//Start recording the path one path piece after the line in lastLineWithSplit,
-//					//so that followPath can be called on the newly created line
-//					if (lastNodeWithSplit != null) {
-//						addNewPath.add(path[currentPathIndex]);
-//					}
-//				}
-//			}
-//
-//
-//		}
-//
-//		//A new line is needed and no line has been added yet. This means that
-//		//the path we followed already existed -> a new line has to be added at
-//		//the last possible split point
-//		if (addNew && !added) {
-//			//A new line should be added but there is no location in the path
-//			//to add a new line
-//			if (lastNodeWithSplit == null) {
-//				throw new GedcomPathAccessError(path, "A new path " + Arrays.toString(path) +
-//						" should be added but the given path seems to have reached its line number limits.");
-//			}
-//
-//			GedcomNode newNode = null;
-//
-//			//Add a new line and continue following the path from that new line on
-//			newNode = lastNodeWithSplit.newLine();
-//
-//			if (addNewPath.size() > 0) {
-//				return newNode.followPath(false, true, addNewPath.toArray(new String[addNewPath.size()]));
-//			} else {
-//				return newNode;
-//			}
-//
-//		}
-//
-//		return n;
-//	}
-//
-//
-//	/**
-//	 *
-//	 *
-//	 * @param pathPiece
-//	 * @param parts
-//	 * @param lineNumber
-//	 * @param path
-//	 * @param o
-//	 * @param previousObject
-//	 * @param currentPathIndex
-//	 * @return
-//	 */
-//	private PathObject followStructureLine(String pathPiece, String[] parts, int lineNumber,
-//			String[] path, GedcomNode o, GedcomNode previousObject, int currentPathIndex) {
-//		String tagExtension = null;
-//		boolean useXRefValue = false;
-//		boolean withXRef = false;
-//		boolean withValue = false;
-//		boolean added = false;
-//
-//
-//		//Parse the step values
-//		if (parts.length > 1) {
-//			//Tag
-//			tagExtension = parts[1];
-//
-//			if (parts.length > 2) {
-//				//withXRef
-//				withXRef = Boolean.parseBoolean(parts[2]);
-//
-//				useXRefValue = true;
-//
-//				if (parts.length > 3) {
-//					//withValue
-//					withValue = Boolean.parseBoolean(parts[3]);
-//
-//					if (parts.length > 4) {
-//						//Line number
-//						if (parts[4].length() > 0) {
-//							try {
-//								lineNumber = Integer.parseInt(parts[4]);
-//							} catch (NumberFormatException e) {
-//								throw new GedcomPathAccessError(path, "Last part of the path piece " + path[currentPathIndex] +
-//										" is not empty and not a number. Failed to parse line number.");
-//							}        
-//						}
-//					}
-//
-//				}
-//			}
-//		}
-//
-//		if (o.hasChildLine(pathPiece, tagExtension, lineNumber)) {
-//			o = o.getChildLine(pathPiece, tagExtension, lineNumber);
-//		} else {
-//			//The line number starts with 0 for the first line, which means if
-//			//there are 5 lines, a lineNumber=5 is the 6th (the next) line.
-//			if (o.getNumberOfLines(pathPiece, tagExtension) != lineNumber) {
-//				throw new GedcomPathAccessError(path, "Line number " + lineNumber +
-//						" is too high. There are only " + o.getNumberOfLines(pathPiece) +
-//						" lines of " + pathPiece + " available.");
-//			}
-//
-//			GedcomNode b = o;
-//
-//			if (useXRefValue) {
-//				o = b.addChildLine(pathPiece, tagExtension, withXRef, withValue);
-//			} else if (tagExtension != null && tagExtension.length() > 0) {
-//				o = b.addChildLine(pathPiece, tagExtension);
-//			} else {
-//				o = b.addChildLine(pathPiece);
-//			}
-//
-//			if (o == null) {
-//				String tagString = "";
-//
-//				if (tagExtension != null && tagExtension.length() > 0) {
-//					tagString = "-" + tagExtension;
-//				}
-//
-//				throw new GedcomPathAccessError(path, "Structure " + pathPiece + tagString +
-//						" can not be accessed/added. Possible line id's: " +
-//						GedcomFormatter.makeOrList(previousObject.getChildNodeKeys(), "", ""));
-//			}
-//
-//			added = true;
-//		}
-//
-//		return new PathObject(o, added);
-//	}
-//
-//	/**
-//	 *
-//	 *
-//	 * @param pathPiece
-//	 * @param parts
-//	 * @param lineNumber
-//	 * @param path
-//	 * @param o
-//	 * @param previousObject
-//	 * @param currentPathIndex
-//	 * @return
-//	 */
-//	private PathObject followTagLine(String pathPiece, String[] parts, int lineNumber,
-//			String[] path, GedcomNode o, GedcomNode previousObject, int currentPathIndex) {
-//		boolean added = false;
-//
-//		if (parts.length > 1) {
-//			//Line number
-//			if (parts[1].length() > 0) {
-//				try {
-//					lineNumber = Integer.parseInt(parts[1]);
-//				} catch (NumberFormatException e) {
-//					throw new GedcomPathAccessError(path, "Last part of the path piece " +
-//							path[currentPathIndex] +
-//							" is not empty and not a number. Failed to parse line number " + parts[1]);
-//				}        
-//			}
-//		}
-//
-//		if (o.hasChildLine(pathPiece, lineNumber)) {
-//			o = o.getChildLine(pathPiece, lineNumber);
-//		} else {
-//
-//			//The line number starts with 0 for the first line, which means if
-//			//there are 5 lines, a lineNumber=5 is the 6th (the next) line.
-//			if (o.getNumberOfLines(pathPiece) != lineNumber) {
-//				throw new GedcomPathAccessError(path, "Line number " + lineNumber +
-//						" is too high. There are only " + o.getNumberOfLines(pathPiece) +
-//						" lines of " + pathPiece + " available.");
-//			}
-//
-//			GedcomNode b = o;
-//
-//			o = b.addChildLine(pathPiece);
-//
-//			if (o == null) {
-//				throw new GedcomPathAccessError(path, "Tag line " + pathPiece +
-//						" can not be accessed/added. Possible line id's: " +
-//						GedcomFormatter.makeOrList(previousObject.getChildNodeKeys(), "", ""));
-//			}
-//
-//			added = true;
-//		}
-//
-//		return new PathObject(o, added);
-//	}
-//
-//
-//	/**
-//	 *
-//	 *
-//	 * @author Thomas Naeff (github.com/thnaeff)
-//	 *
-//	 */
-//	private class PathObject {
-//
-//		private GedcomNode o = null;
-//
-//		private boolean added = false;
-//
-//
-//		public PathObject(GedcomNode o, boolean added) {
-//			this.o = o;
-//			this.added = added;
-//		}
-//
-//	}
+	/**
+	 * Follows the path given with <code>path</code>. Each array position describes
+	 * one path step, and each step can contain multiple values describing the
+	 * step. The following lines each show one step in the path, (multiple values 
+	 * are separated by {@value #PATH_OPTION_DELIMITER}):<br>
+	 * - "tag or structure name"<br>
+	 * - "tag or structure name;line number"<br>
+	 * - "structure name;tag"<br>
+	 * - "structure name;tag;with xref;with value;line number"<br>
+	 * - "structure name;tag;with xref;with value"<br>
+	 * ("with xref" and "with value" have to be given as "true" or "false")<br>
+	 * <br>
+	 * If multiple step values are given, they have to be separated with the
+	 * {@link #PATH_OPTION_DELIMITER}. Multiple step values are needed if the
+	 * next path step can not be identified with one step value only. A tag line
+	 * for example can be added multiple times, thus when accessing that line, the
+	 * tag and the line number have to be given. Also, some structures exist in
+	 * different variations (with/without xref, with/without value, ...) and might
+	 * have to be accessed with multiple values for one path step.<br>
+	 * If a path can not be followed, this method throws an {@link GedcomPathAccessError}
+	 * with an error text and the path which caused the error. The error text might
+	 * give a hint to what has gone wrong.
+	 *
+	 * @param createNewIfNotExisting If set to <code>true</code>, it tries to 
+	 * create the path if it does not exist yet
+	 * @param createNewEnd If set to <code>true</code>, it tries to create a new 
+	 * path at the very most end possible. This means that if no such path exists 
+	 * yet, the path is created and if such a path already exists, a new one is 
+	 * created.
+	 * @param createPath Create the whole given path.
+	 * @param path The path to follow.
+	 * @return The {@link GedcomNode} of the last object in the path, or <code>null</code> if 
+	 * following the path did not work.
+	 * @throws GedcomPathAccessError If a path piece can not be accessed because it 
+	 * does not exist
+	 * @throws GedcomCreationError If new path pieces have to be created but they
+	 * can not be created (because of invalid structure/tag names, or there is no 
+	 * node which can have another line added).
+	 */
+	private GedcomNode followPath(boolean createNewIfNotExisting, boolean createNewEnd, 
+			boolean createPath, String... path) {
+		
+		if (path == null || path.length == 0) {
+			//Nothing to do
+			return this;
+		}
+		
+		GedcomNode currentNode = this;
+		GedcomNode lastNodeWithSplitPossibility = null;
+		
+		int lastIndexWithSplitPossibility = -1;
+		int pathIndex = 0;
+		
+		for (; pathIndex < path.length; pathIndex++) {
+			PathStepPieces pp = new PathStepPieces();
+			if (!pp.parse(path[pathIndex])) {
+				//Nothing to do
+				continue;
+			}
+			
+			if ((createNewEnd || createNewIfNotExisting) 
+					&& !currentNode.maxNumberOfLinesReached(pp.tagOrStructureName)) {
+				lastNodeWithSplitPossibility = currentNode;
+				lastIndexWithSplitPossibility = pathIndex;
+			}
+			
+			if (createPath) {
+				//Create path
+				if (pp.tag == null) {
+					currentNode = currentNode.addChildLine(pp.tagOrStructureName);
+				} else {
+					currentNode = currentNode.addChildLine(pp.tagOrStructureName, pp.tag, 
+							pp.lookForXRefAndValueVariation, pp.withXRef, pp.withValue);
+				}
+				
+				if (currentNode == null) {
+					throw new GedcomPathCreationError(path, pathIndex, 
+							"Can not create path '" + path[pathIndex] + "'.");
+				}
+			} else {
+				//Follow path
+				if (pp.tag == null) {
+					currentNode = currentNode.followSimplePath(pp.tagOrStructureName, pp.lineNumber);
+				} else {
+					currentNode = currentNode.followStructurePath(pp.tagOrStructureName, pp.tag, 
+							pp.lookForXRefAndValueVariation, pp.withXRef, pp.withValue, pp.lineNumber);
+				}
+				
+				if ((createNewEnd || createPath || createNewIfNotExisting) 
+						&& currentNode == null) {
+					//Failed to follow path
+					break;
+				}
+				
+				if (currentNode == null) {
+					throw new GedcomPathAccessError(path, pathIndex, 
+							"Can not access path '" + path[pathIndex] + "'.");
+				}
+			}
+			
+		}
+		
+		if (createNewEnd || (createNewIfNotExisting && currentNode == null)) {
+			//createNewEnd: Create a new end without caring if such a path is already 
+			//there or not. 
+			//createNewIfNotExisting: Following the path was not possible -> create it
+			
+			if (lastNodeWithSplitPossibility == null) {
+				throw new GedcomPathCreationError(path, lastIndexWithSplitPossibility, 
+						"Can not create a new path " + Arrays.toString(path) + 
+						" in " + this + ". The maximum number of lines has been reached.");
+			} else {
+				//Create new path, starting at the last possible split point
+				String[] newPath = new String[path.length - lastIndexWithSplitPossibility];
+				System.arraycopy(path, lastIndexWithSplitPossibility, newPath, 0, newPath.length);
+				return lastNodeWithSplitPossibility.createPath(newPath);
+			}
+		}
+		
+		return currentNode;
+	}
+	
+	/**
+	 * 
+	 * 
+	 * @param tagOrStructureName
+	 * @param lineNumber
+	 * @return
+	 */
+	protected GedcomNode followSimplePath(String tagOrStructureName, int lineNumber) {
+		return (GedcomNode)getChildNode(tagOrStructureName, lineNumber);
+	}
+	
+	/**
+	 * 
+	 * 
+	 * @param structureName
+	 * @param tag
+	 * @param lookForXRefAndValueVariation
+	 * @param withXRef
+	 * @param withValue
+	 * @param lineNumber
+	 * @return
+	 */
+	protected GedcomNode followStructurePath(String structureName, String tag, 
+			boolean lookForXRefAndValueVariation, boolean withXRef, boolean withValue, int lineNumber) {
+		
+		LinkedList<TreeNode<String, GedcomLine>> children = getChildNodes();
+		
+		int matchCount = -1;
+		
+		//Search for the child node which matches the parameters
+		for (TreeNode<String, GedcomLine> child : children) {
+			if (structureName.equals(((GedcomNode)child).getTagOrStructureName())
+					&& tag.equals(((GedcomNode)child).getTag())) {
+				matchCount++;;
+			}
+			
+			if (matchCount > 0 && lookForXRefAndValueVariation) {
+				if (withXRef == ((GedcomNode)child).getWithXRef() 
+						&& withValue == ((GedcomNode)child).getWithValue()) {
+					//Keep the match count
+				} else {
+					//Not a match with xref and value -> get rid of match
+					matchCount--;
+				}
+			}
+			
+			if (matchCount == lineNumber) {
+				return (GedcomNode) child;
+			}
+		}
+		
+		return null;
+	}
+	
+	
+	/**
+	 * @return tagOrStructureName
+	 */
+	protected String getTagOrStructureName() {
+		return tagOrStructureName;
+	}
+	
+	/**
+	 * @return tag
+	 */
+	protected String getTag() {
+		return tag;
+	}
+	
+	/**
+	 * 
+	 * @return lookForXRefAndValueVariation
+	 */
+	protected boolean getLookForXRefAndValueVariation() {
+		return lookForXRefAndValueVariation;
+	}
+	
+	/**
+	 * 
+	 * 
+	 * @return withXRef
+	 */
+	protected boolean getWithXRef() {
+		return withXRef;
+	}
+	
+	/**
+	 * 
+	 * 
+	 * @return withValue
+	 */
+	protected boolean getWithValue() {
+		return withValue;
+	}
 
 
 	@Override
@@ -950,6 +962,63 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 		} else {
 			return getNodeValue().toString();
 		}
+	}
+	
+	
+	
+	
+	/**************************************************************************
+	 * 
+	 * 
+	 *
+	 * @author Thomas Naeff (github.com/thnaeff)
+	 *
+	 */
+	private class PathStepPieces {
+		protected String tagOrStructureName = null;
+		protected String tag = null;
+		protected boolean lookForXRefAndValueVariation = false;
+		protected boolean withXRef = false;
+		protected boolean withValue = false;
+		protected int lineNumber = 0;
+		
+		
+		public boolean parse(String pathPiece) {
+			String[] pathPieceParts = pathPiece.split(PATH_OPTION_DELIMITER);
+			
+			if (pathPieceParts.length == 0) {
+				return false;
+			}
+			
+			tagOrStructureName = pathPieceParts[0];
+			
+			if (pathPieceParts.length > 1) {
+				try {
+					lineNumber = Integer.parseInt(pathPieceParts[1]);
+				} catch (NumberFormatException e) {
+					//If it is not a line number, it must be a tag
+					tag = pathPieceParts[1];
+				}
+				
+				//Only continue if there was a tag
+				if (tag != null && pathPieceParts.length > 2) {
+					lookForXRefAndValueVariation = true;
+					withXRef = Boolean.parseBoolean(pathPieceParts[2]);
+					
+					if (pathPieceParts.length > 3) {
+						withValue = Boolean.parseBoolean(pathPieceParts[3]);
+					}
+					
+					if (pathPieceParts.length > 4) {
+						lineNumber = Integer.parseInt(pathPieceParts[4]);
+					}
+				}
+			}
+			
+			return true;
+		}
+		
+		
 	}
 
 }
