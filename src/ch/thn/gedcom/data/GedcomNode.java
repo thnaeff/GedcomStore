@@ -292,7 +292,8 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 		
 		LinkedList<TreeNode<String, GedcomLine>> children = getChildNodes(structureName);
 		
-		if (children.size() == 0) {
+		if (children == null || children.size() == 0) {
+			//Nothin to do
 			return null;
 		}
 		
