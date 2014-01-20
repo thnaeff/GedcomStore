@@ -51,6 +51,8 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 	private boolean lookForXRefAndValueVariation = false;
 	private boolean withXRef = false;
 	private boolean withValue = false;
+	
+	private boolean forcePrint = false;
 
 	/**
 	 * 
@@ -670,9 +672,31 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 		}
 	}
 	
+	/**
+	 * Set this flag to <code>true</code> if this node should be printed for sure 
+	 * (even though it does not have any values set).
+	 * 
+	 * @param forcePrint
+	 */
+	public void forcePrint(boolean forcePrint) {
+		this.forcePrint = forcePrint;
+	}
+	
+	/**
+	 * If the returned flag is <code>true</code>, this node has to be printed
+	 * 
+	 * @return
+	 */
+	public boolean forcePrint() {
+		return forcePrint;
+	}
 	
 	@Override
 	public boolean isInvisibleNode() {
+		if (forcePrint) {
+			return false;
+		}
+		
 		if (super.isInvisibleNode()) {
 			return true;
 		}
@@ -687,6 +711,10 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 
 	@Override
 	public boolean printNode() {
+		if (forcePrint) {
+			return true;
+		}
+		
 		if (!getTreePrinter().skipHiddenNodes()) {
 			return true;
 		}
