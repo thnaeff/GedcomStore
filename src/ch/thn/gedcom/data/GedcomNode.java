@@ -775,6 +775,10 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 			LinkedList<TreeNode<String, GedcomLine>> nodes = node.getChildNodes();
 
 			for (TreeNode<String, GedcomLine> n : nodes) {
+				if (((GedcomNode)n).forcePrint()) {
+					//Do not skip, because a lower level node is forced to be printed
+					return false;
+				}
 				
 				if (!skipLinePrint((GedcomNode)n, printEmptyLines, printLinesWithNoValueSet)) {
 					//A tag line found which should not be skipped
