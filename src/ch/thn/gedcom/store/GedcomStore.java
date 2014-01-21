@@ -104,7 +104,6 @@ public class GedcomStore {
 	private ArrayList<String> loadedFileDescription = null;
 	
 	private boolean showParsingOutput = true;
-	private boolean showAccessOutput = true;
 	
 	/**
 	 * Creates a new empty store object which can be filled with structures by 
@@ -631,30 +630,6 @@ public class GedcomStore {
 	 */
 	public void showParsingOutput(boolean show) {
 		showParsingOutput = show;
-	}
-	
-	/**
-	 * Returns whether or not the access output is showing or not showing. The 
-	 * access output is shown when navigating through {@link GedcomBlock}s and 
-	 * {@link GedcomLine}s. This is a general switch which affects all the 
-	 * blocks and lines taken from this store.
-	 * 
-	 * @return
-	 */
-	public boolean showAccessOutput() {
-		return showAccessOutput;
-	}
-	
-	/**
-	 * Turn the access output on or off. The 
-	 * access output is shown when navigating through {@link GedcomBlock}s and 
-	 * {@link GedcomLine}s. This is a general switch which affects all the 
-	 * blocks and lines taken from this store.
-	 * 
-	 * @param show
-	 */
-	public void showAccessOutput(boolean show) {
-		showAccessOutput = show;
 	}
 	
 	
