@@ -1049,7 +1049,7 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 	 * @author Thomas Naeff (github.com/thnaeff)
 	 *
 	 */
-	private class PathStepPieces {
+	public class PathStepPieces {
 		protected String tagOrStructureName = null;
 		protected String tag = null;
 		protected boolean lookForXRefAndValueVariation = false;
