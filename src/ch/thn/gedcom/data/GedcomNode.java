@@ -1070,9 +1070,13 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 				}
 				
 				//Only show an error message if the path should be created
-				if (currentNode == null && createPath) {
-					throw new GedcomPathAccessError(path, pathIndex, 
-							"Can not access path '" + path[pathIndex] + "'.");
+				if (currentNode == null) {
+					if (createPath) {
+						throw new GedcomPathAccessError(path, pathIndex, 
+								"Can not access path '" + path[pathIndex] + "'.");
+					} else {
+						return null;
+					}
 				}
 			}
 			
