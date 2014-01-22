@@ -93,7 +93,7 @@ public class GedcomStoreTest {
 		indi1.addChildLine("INDIVIDUAL_EVENT_STRUCTURE", "DEAT").addChildLine("DEAT").addChildLine("INDIVIDUAL_EVENT_DETAIL").addChildLine("EVENT_DETAIL").addChildLine("DATE").setTagLineValue("death date");
 		GedcomNode indi13 = indi1.addChildLine("SPOUSE_TO_FAMILY_LINK");
 		GedcomNode indi14 = indi1.addChildLine("CHANGE_DATE");
-		
+				
 		indi11.newLine();
 		
 		GedcomNode indi131 = indi13.addChildLine("FAMS");
@@ -112,6 +112,12 @@ public class GedcomStoreTest {
 		
 		indi1.addChildLine("CHILD_TO_FAMILY_LINK").addChildLine("FAMC").setTagLineXRef("famclink");
 		
+		
+		
+		
+		System.out.println("Number of INDIVIDUAL_EVENT_STRUCTURE: " + indi1.getNumberOfChildLines("INDIVIDUAL_EVENT_STRUCTURE"));
+		System.out.println("Number of INDIVIDUAL_EVENT_STRUCTURE DEAT: " + indi1.getNumberOfChildLines("INDIVIDUAL_EVENT_STRUCTURE", "DEAT"));
+
 		
 		System.out.println(indi1.followPath("CHILD_TO_FAMILY_LINK", "FAMC"));
 		

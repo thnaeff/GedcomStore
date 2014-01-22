@@ -18,6 +18,7 @@ package ch.thn.gedcom.data;
 
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 
 import ch.thn.gedcom.GedcomFormatter;
 import ch.thn.gedcom.store.GedcomStoreBlock;
@@ -295,35 +296,147 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 		LinkedList<TreeNode<String, GedcomLine>> children = getChildNodes(structureName);
 		
 		if (children == null || children.size() == 0) {
-			//Nothin to do
+			//Nothing to do
 			return null;
 		}
 		
-		int matchCount = -1;
+		return searchForNode(children, structureName, tag, lookForXRefAndValueVariation, withXRef, withValue, lineNumber);
+	}
+	
+	/**
+	 * Searches the matching node in the list of given nodes
+	 * 
+	 * @param nodes
+	 * @param structureName
+	 * @param tag
+	 * @param lookForXRefAndValueVariation
+	 * @param withXRef
+	 * @param withValue
+	 * @param lineNumber
+	 * @return
+	 */
+	private GedcomNode searchForNode(List<TreeNode<String, GedcomLine>> nodes, 
+			String structureName, String tag, boolean lookForXRefAndValueVariation, 
+			boolean withXRef, boolean withValue, int lineNumber) {
+		int lineIndexCount = -1;
 		
 		//Search for the child node which matches the parameters
-		for (TreeNode<String, GedcomLine> child : children) {
-			if (structureName.equals(((GedcomNode)child).getTagOrStructureName())
-					&& tag.equals(((GedcomNode)child).getTag())) {
-				matchCount++;;
-			}
-			
-			if (matchCount > 0 && lookForXRefAndValueVariation) {
-				if (withXRef == ((GedcomNode)child).getWithXRef() 
-						&& withValue == ((GedcomNode)child).getWithValue()) {
-					//Keep the match count
+		for (TreeNode<String, GedcomLine> node : nodes) {
+			if (structureName.equals(((GedcomNode)node).getTagOrStructureName())
+					&& tag.equals(((GedcomNode)node).getTag())) {
+				
+				if (lookForXRefAndValueVariation) {
+					if (withXRef == ((GedcomNode)node).getWithXRef() 
+							&& withValue == ((GedcomNode)node).getWithValue()) {
+						lineIndexCount++;
+					}
 				} else {
-					//Not a match with xref and value -> get rid of match
-					matchCount--;
+					lineIndexCount++;
 				}
 			}
 			
-			if (matchCount == lineNumber) {
-				return (GedcomNode) child;
+			if (lineIndexCount == lineNumber) {
+				return (GedcomNode) node;
 			}
 		}
 		
 		return null;
+	}
+	
+	/**
+	 * Counts the matching node in the list of given nodes
+	 * 
+	 * @param nodes
+	 * @param structureName
+	 * @param tag
+	 * @param lookForXRefAndValueVariation
+	 * @param withXRef
+	 * @param withValue
+	 * @return The number of nodes which match the given parameters, or -1 if 
+	 * no matching node has been found
+	 */
+	private int countNodes(List<TreeNode<String, GedcomLine>> nodes, 
+			String structureName, String tag, boolean lookForXRefAndValueVariation, 
+			boolean withXRef, boolean withValue) {
+		int matchCount = 0;
+		
+		//Search for the child node which matches the parameters
+		for (TreeNode<String, GedcomLine> node : nodes) {
+			if (structureName.equals(((GedcomNode)node).getTagOrStructureName())
+					&& tag.equals(((GedcomNode)node).getTag())) {
+				
+				if (lookForXRefAndValueVariation) {
+					if (withXRef == ((GedcomNode)node).getWithXRef() 
+							&& withValue == ((GedcomNode)node).getWithValue()) {
+						matchCount++;
+					}
+				} else {
+					matchCount++;
+				}
+			}
+			
+		}
+		
+		return matchCount;
+	}
+	
+	/**
+	 * Returns the number of lines which have the given tag or structure name. 
+	 * If there are different structure variations for one name, they are all 
+	 * counted together.
+	 * 
+	 * @param tagOrStructureName
+	 * @return
+	 */
+	public int getNumberOfChildLines(String tagOrStructureName) {
+		return getNumberOfChildNodes(tagOrStructureName);
+	}
+	
+	/**
+	 * Counts the number of structures with the given tag variation
+	 * 
+	 * @param structureName
+	 * @param tag
+	 * @return
+	 */
+	public int getNumberOfChildLines(String structureName, String tag) {
+		if (tag == null) {
+			return getNumberOfChildLines(structureName);
+		}
+		
+		LinkedList<TreeNode<String, GedcomLine>> children = getChildNodes(structureName);
+		
+		if (children == null || children.size() == 0) {
+			//Nothing to do
+			return 0;
+		}
+		
+		return countNodes(children, structureName, tag, false, false, false);
+	}
+	
+	/**
+	 * Counts the number of structures with the given tag, xref and value variation
+	 * 
+	 * @param structureName
+	 * @param tag
+	 * @param withXRef
+	 * @param withValue
+	 * @return
+	 */
+	public int getNumberOfChildLines(String structureName, String tag, 
+			boolean withXRef, boolean withValue) {
+		if (tag == null) {
+			return getNumberOfChildLines(structureName);
+		}
+		
+		LinkedList<TreeNode<String, GedcomLine>> children = getChildNodes(structureName);
+		
+		if (children == null || children.size() == 0) {
+			//Nothing to do
+			return 0;
+		}
+		
+		return countNodes(children, structureName, tag, true, withXRef, withValue);
 	}
 
 	/**
@@ -956,7 +1069,8 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 					break;
 				}
 				
-				if (currentNode == null) {
+				//Only show an error message if the path should be created
+				if (currentNode == null && createPath) {
 					throw new GedcomPathAccessError(path, pathIndex, 
 							"Can not access path '" + path[pathIndex] + "'.");
 				}
@@ -1050,14 +1164,20 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 	 *
 	 */
 	public class PathStepPieces {
-		protected String tagOrStructureName = null;
-		protected String tag = null;
-		protected boolean lookForXRefAndValueVariation = false;
-		protected boolean withXRef = false;
-		protected boolean withValue = false;
-		protected int lineNumber = 0;
+		public String tagOrStructureName = null;
+		public String tag = null;
+		public boolean lookForXRefAndValueVariation = false;
+		public boolean withXRef = false;
+		public boolean withValue = false;
+		public int lineNumber = 0;
 		
-		
+		/**
+		 * Parses the given path piece. The path piece has to use the delimiter 
+		 * from {@link PATH_OPTION_DELIMITER}
+		 * 
+		 * @param pathPiece
+		 * @return
+		 */
 		public boolean parse(String pathPiece) {
 			String[] pathPieceParts = pathPiece.split(PATH_OPTION_DELIMITER);
 			
