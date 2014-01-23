@@ -1041,7 +1041,16 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 				lastIndexWithSplitPossibility = pathIndex;
 			}
 			
+			GedcomNode lastNode = currentNode;
+			
 			if (createPath) {
+				if (currentNode.maxNumberOfLinesReached(pp.tagOrStructureName)) {
+					throw new GedcomPathCreationError(path, pathIndex, 
+							"Can not add another path '" + path[pathIndex] + 
+							"' as child of '" + lastNode.getNodeKey() + "'. " + 
+							"Maximum number of lines reached.");
+				}
+				
 				//Create path
 				if (pp.tag == null) {
 					currentNode = currentNode.addChildLine(pp.tagOrStructureName);
@@ -1052,7 +1061,8 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 				
 				if (currentNode == null) {
 					throw new GedcomPathCreationError(path, pathIndex, 
-							"Can not create path '" + path[pathIndex] + "'.");
+							"Can not create path '" + path[pathIndex] + 
+							"' as child of '" + lastNode.getNodeKey() + "'.");
 				}
 			} else {
 				//Follow path
@@ -1073,7 +1083,8 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 				if (currentNode == null) {
 					if (createPath) {
 						throw new GedcomPathAccessError(path, pathIndex, 
-								"Can not access path '" + path[pathIndex] + "'.");
+								"Can not access path '" + path[pathIndex] + 
+								"' as child of '" + lastNode.getNodeKey() + "'.");
 					} else {
 						return null;
 					}
@@ -1082,7 +1093,7 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 			
 		}
 		
-		if (createNewEnd || (createNewIfNotExisting && currentNode == null)) {
+		if (!createPath && (createNewEnd || (createNewIfNotExisting && currentNode == null))) {
 			//createNewEnd: Create a new end without caring if such a path is already 
 			//there or not. 
 			//createNewIfNotExisting: Following the path was not possible -> create it
