@@ -123,18 +123,30 @@ public class GedcomHelper {
 	
 	
 	/**
-	 * Calculates the current age of the person with the given birthDate
+	 * Calculates the current age (until the date of the execution of this method) 
+	 * of the person with the given birthDate
 	 * 
 	 * @param birthDate
 	 * @return
 	 */
 	public static int getAge(Date birthDate) {
-		if (birthDate == null) {
+		return getAge(birthDate, new Date());
+	}
+	
+	/**
+	 * Calculates the age of the person between the given birthDate and the toDate
+	 * 
+	 * @param fromDate
+	 * @param toDate
+	 * @return
+	 */
+	public static int getAge(Date fromDate, Date toDate) {
+		if (fromDate == null || toDate == null) {
 			return 0;
 		}
 		
-		DateMidnight bd = new DateMidnight(birthDate);
-		DateTime now = new DateTime();
+		DateMidnight bd = new DateMidnight(fromDate);
+		DateTime now = new DateTime(toDate);
 		Years age = Years.yearsBetween(bd, now);
 		return age.getYears();
 	}
