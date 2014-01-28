@@ -32,7 +32,7 @@ public class GedcomStructureHTMLPrinter extends HTMLTreePrinter<String, GedcomLi
 	
 	public GedcomStructureHTMLPrinter(String treeTitle) {
 		//Do not use colors since the tree lines are not shown anyways
-		super(treeTitle, false, true, true, null);
+		super(treeTitle, false, true, true);
 		
 		CONNECTOR_HEAD = "";
 		CONNECTOR_START = "";
@@ -44,7 +44,7 @@ public class GedcomStructureHTMLPrinter extends HTMLTreePrinter<String, GedcomLi
 		CONNECTOR_ADDITIONALLINEAFTEREND = "";
 		START_OF_LINE = "<tr>";
 		END_OF_LINE = "</tr>" + TreePrinter.LINE_SEPARATOR;
-		
+				
 	}
 	
 }
