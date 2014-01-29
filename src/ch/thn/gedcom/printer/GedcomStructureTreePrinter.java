@@ -17,8 +17,8 @@
 package ch.thn.gedcom.printer;
 
 import ch.thn.gedcom.data.GedcomLine;
-import ch.thn.util.tree.PrintableTreeNode;
 import ch.thn.util.tree.printer.GenericTreePrinter;
+import ch.thn.util.tree.printer.PrintableTreeNode;
 
 /**
  * A printer which prints the whole tree structure of the gedcom data and also 
@@ -55,11 +55,12 @@ public class GedcomStructureTreePrinter extends GenericTreePrinter<String, Gedco
 		sb.append(node.getAsTreeNode().getNodeLevel(false));
 		sb.append("-" + node.getAsTreeNode().getNodeLevel(true) + " ");
 		
-		if (node.isInvisibleNode()) {
+		
+		if (isInvisibleNode(node)) {
 			sb.append("[i] ");
-		} else if (!node.printNode()) {
+		} else if (!printNode(node)) {
 			sb.append("[h] ");
-		} else if (!node.printChildNodes()) {
+		} else if (!printChildNodes(node)) {
 			sb.append("[c] ");
 		}
 		

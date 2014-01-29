@@ -18,8 +18,8 @@ package ch.thn.gedcom.printer;
 
 import ch.thn.gedcom.GedcomFormatter;
 import ch.thn.gedcom.data.GedcomLine;
-import ch.thn.util.tree.PrintableTreeNode;
 import ch.thn.util.tree.printer.GenericTreePrinter;
+import ch.thn.util.tree.printer.PrintableTreeNode;
 import ch.thn.util.tree.printer.TreePrinter;
 
 /**
