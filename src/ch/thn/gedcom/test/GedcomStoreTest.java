@@ -32,7 +32,7 @@ import ch.thn.gedcom.printer.GedcomStructureTextPrinter;
 import ch.thn.gedcom.printer.GedcomStructureTreePrinter;
 import ch.thn.gedcom.store.GedcomParseException;
 import ch.thn.gedcom.store.GedcomStore;
-import ch.thn.util.tree.printer.SimpleTreePrinter;
+import ch.thn.util.tree.printable.printer.SimpleTreePrinter;
 
 /**
  * @author Thomas Naeff (github.com/thnaeff)

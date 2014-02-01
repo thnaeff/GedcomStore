@@ -24,14 +24,14 @@ import ch.thn.gedcom.GedcomFormatter;
 import ch.thn.gedcom.store.GedcomStoreBlock;
 import ch.thn.gedcom.store.GedcomStoreLine;
 import ch.thn.gedcom.store.GedcomStoreStructure;
-import ch.thn.util.tree.TreeNode;
 import ch.thn.util.tree.TreeNodeException;
+import ch.thn.util.tree.printable.PrintableTreeNode;
 
 /**
  * @author Thomas Naeff (github.com/thnaeff)
  *
  */
-public class GedcomNode extends TreeNode<String, GedcomLine> {
+public class GedcomNode extends PrintableTreeNode<String, GedcomLine> {
 
 	/** The delimiter for multiple step values used in {@link #followPath(String...)} **/
 	public static final String PATH_OPTION_DELIMITER = ";";
@@ -52,8 +52,6 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 	private boolean lookForXRefAndValueVariation = false;
 	private boolean withXRef = false;
 	private boolean withValue = false;
-	
-	private boolean forcePrint = false;
 
 	/**
 	 * 
@@ -293,7 +291,7 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 	private GedcomNode getChildLine(String structureName, String tag, 
 			boolean lookForXRefAndValueVariation, boolean withXRef, boolean withValue, int lineNumber) {
 		
-		LinkedList<TreeNode<String, GedcomLine>> children = getChildNodes(structureName);
+		LinkedList<PrintableTreeNode<String, GedcomLine>> children = getChildNodes(structureName);
 		
 		if (children == null || children.size() == 0) {
 			//Nothing to do
@@ -315,13 +313,13 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 	 * @param lineNumber
 	 * @return
 	 */
-	private GedcomNode searchForNode(List<TreeNode<String, GedcomLine>> nodes, 
+	private GedcomNode searchForNode(List<PrintableTreeNode<String, GedcomLine>> nodes, 
 			String structureName, String tag, boolean lookForXRefAndValueVariation, 
 			boolean withXRef, boolean withValue, int lineNumber) {
 		int lineIndexCount = -1;
 		
 		//Search for the child node which matches the parameters
-		for (TreeNode<String, GedcomLine> node : nodes) {
+		for (PrintableTreeNode<String, GedcomLine> node : nodes) {
 			if (structureName.equals(((GedcomNode)node).getTagOrStructureName())
 					&& tag.equals(((GedcomNode)node).getTag())) {
 				
@@ -355,13 +353,13 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 	 * @return The number of nodes which match the given parameters, or -1 if 
 	 * no matching node has been found
 	 */
-	private int countNodes(List<TreeNode<String, GedcomLine>> nodes, 
+	private int countNodes(List<PrintableTreeNode<String, GedcomLine>> nodes, 
 			String structureName, String tag, boolean lookForXRefAndValueVariation, 
 			boolean withXRef, boolean withValue) {
 		int matchCount = 0;
 		
 		//Search for the child node which matches the parameters
-		for (TreeNode<String, GedcomLine> node : nodes) {
+		for (PrintableTreeNode<String, GedcomLine> node : nodes) {
 			if (structureName.equals(((GedcomNode)node).getTagOrStructureName())
 					&& tag.equals(((GedcomNode)node).getTag())) {
 				
@@ -404,7 +402,7 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 			return getNumberOfChildLines(structureName);
 		}
 		
-		LinkedList<TreeNode<String, GedcomLine>> children = getChildNodes(structureName);
+		LinkedList<PrintableTreeNode<String, GedcomLine>> children = getChildNodes(structureName);
 		
 		if (children == null || children.size() == 0) {
 			//Nothing to do
@@ -429,7 +427,7 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 			return getNumberOfChildLines(structureName);
 		}
 		
-		LinkedList<TreeNode<String, GedcomLine>> children = getChildNodes(structureName);
+		LinkedList<PrintableTreeNode<String, GedcomLine>> children = getChildNodes(structureName);
 		
 		if (children == null || children.size() == 0) {
 			//Nothing to do
@@ -508,9 +506,9 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 	 * @return
 	 */
 	public boolean hasLineWithValue(String value) {
-		LinkedList<TreeNode<String, GedcomLine>> nodes = getChildNodes();
+		LinkedList<PrintableTreeNode<String, GedcomLine>> nodes = getChildNodes();
 		
-		for (TreeNode<String, GedcomLine> node : nodes) {
+		for (PrintableTreeNode<String, GedcomLine> node : nodes) {
 			GedcomLine line = node.getNodeValue();
 			if (line.isTagLine()
 					&& line.getAsTagLine().getValue() != null
@@ -530,9 +528,9 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 	 * @return
 	 */
 	public boolean hasLineWithXRef(String xref) {
-		LinkedList<TreeNode<String, GedcomLine>> nodes = getChildNodes();
+		LinkedList<PrintableTreeNode<String, GedcomLine>> nodes = getChildNodes();
 		
-		for (TreeNode<String, GedcomLine> node : nodes) {
+		for (PrintableTreeNode<String, GedcomLine> node : nodes) {
 			GedcomLine line = node.getNodeValue();
 			if (line.isTagLine()
 					&& line.getAsTagLine().getXRef() != null
@@ -785,57 +783,19 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 		}
 	}
 	
-	/**
-	 * Set this flag to <code>true</code> if this node should be printed for sure 
-	 * (even though it does not have any values set).
-	 * 
-	 * @param forcePrint
-	 */
-	public void forcePrint(boolean forcePrint) {
-		this.forcePrint = forcePrint;
-	}
-	
-	/**
-	 * If the returned flag is <code>true</code>, this node has to be printed
-	 * 
-	 * @return
-	 */
-	public boolean forcePrint() {
-		return forcePrint;
-	}
-	
 	@Override
 	public boolean isInvisibleNode() {
-		if (forcePrint) {
-			return false;
-		}
-		
-		if (super.isInvisibleNode()) {
-			return true;
-		}
-		
 		//Do not print structure lines
-		if (getNodeValue().isStructureLine()) {
+		if (getNodeValue() != null && getNodeValue().isStructureLine()) {
 			return true;
 		}
 		
-		return false;
+		return super.isInvisibleNode();
 	}
 
 	@Override
 	public boolean printNode() {
-		if (forcePrint) {
-			return true;
-		}
-		
-		if (!getTreePrinter().skipHiddenNodes()) {
-			return true;
-		}
-		
-		if (!super.printNode()) {
-			return false;
-		}
-		
+		//Always print the head
 		if (isHeadNode()) {
 			return true;
 		}
@@ -885,9 +845,9 @@ public class GedcomNode extends TreeNode<String, GedcomLine> {
 		//does not need to be printed if skip has already been set to true
 
 		if (skip && node.hasChildNodes()) {
-			LinkedList<TreeNode<String, GedcomLine>> nodes = node.getChildNodes();
+			LinkedList<PrintableTreeNode<String, GedcomLine>> nodes = node.getChildNodes();
 
-			for (TreeNode<String, GedcomLine> n : nodes) {
+			for (PrintableTreeNode<String, GedcomLine> n : nodes) {
 				if (((GedcomNode)n).forcePrint()) {
 					//Do not skip, because a lower level node is forced to be printed
 					return false;

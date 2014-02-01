@@ -17,27 +17,17 @@
 package ch.thn.gedcom.printer;
 
 import ch.thn.gedcom.data.GedcomLine;
-import ch.thn.util.tree.printer.GenericTreePrinter;
-import ch.thn.util.tree.printer.PrintableTreeNode;
+import ch.thn.util.tree.printable.printer.DebugTreePrinter;
 
 /**
- * A printer which prints the whole tree structure of the gedcom data and also 
- * shows the tree lines connecting the tree elements. In addition, it has a flag 
- * to turn the invisible/hidden nodes on or off. Setting the invisible nodes to on is very 
- * useful when creating a gedcom structure since it shows all the added lines 
- * and not only the elements which would be printed. This is great for debugging 
- * the tree building process.<br>
- * <br>
- * This printer adds some information in front of each line:<br>
- * - The actual level of the line (a) and the level the line would have if invisible 
- * lines would not be printed (b) in the format "a-b"<br>
- * - Some tags which show if the line is set to invisible [i], hidden [h] or set 
- * to hidden child lines [c].
+ * Simply extends {@link DebugTreePrinter} and is very useful for debugging 
+ * a gedcom tree when building it.
  * 
  * @author Thomas Naeff (github.com/thnaeff)
- *
+ * 
+ * @see DebugTreePrinter
  */
-public class GedcomStructureTreePrinter extends GenericTreePrinter<String, GedcomLine> {
+public class GedcomStructureTreePrinter extends DebugTreePrinter<String, GedcomLine> {
 
 	/**
 	 * 
@@ -47,26 +37,6 @@ public class GedcomStructureTreePrinter extends GenericTreePrinter<String, Gedco
 	public GedcomStructureTreePrinter(boolean showAllNodes) {
 		super(!showAllNodes, !showAllNodes);
 		
-	}
-	
-	@Override
-	public StringBuilder getNodeValue(PrintableTreeNode<String, GedcomLine> node) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(node.getAsTreeNode().getNodeLevel(false));
-		sb.append("-" + node.getAsTreeNode().getNodeLevel(true) + " ");
-		
-		
-		if (isInvisibleNode(node)) {
-			sb.append("[i] ");
-		} else if (!printNode(node)) {
-			sb.append("[h] ");
-		} else if (!printChildNodes(node)) {
-			sb.append("[c] ");
-		}
-		
-		sb.append(node.print());
-		
-		return sb;
 	}
 	
 	

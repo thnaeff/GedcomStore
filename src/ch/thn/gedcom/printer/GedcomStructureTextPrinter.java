@@ -18,9 +18,9 @@ package ch.thn.gedcom.printer;
 
 import ch.thn.gedcom.GedcomFormatter;
 import ch.thn.gedcom.data.GedcomLine;
-import ch.thn.util.tree.printer.GenericTreePrinter;
-import ch.thn.util.tree.printer.PrintableTreeNode;
-import ch.thn.util.tree.printer.TreePrinter;
+import ch.thn.util.tree.printable.PrintableTreeNode;
+import ch.thn.util.tree.printable.printer.SimpleTreePrinter;
+import ch.thn.util.tree.printable.printer.TreePrinter;
 
 /**
  * A printer which prints the gedcom structure in text format. The output 
@@ -30,34 +30,42 @@ import ch.thn.util.tree.printer.TreePrinter;
  * @author Thomas Naeff (github.com/thnaeff)
  *
  */
-public class GedcomStructureTextPrinter extends GenericTreePrinter<String, GedcomLine> {
+public class GedcomStructureTextPrinter extends SimpleTreePrinter<String, GedcomLine> {
 
 	
 	public GedcomStructureTextPrinter() {
-		super(
-				"", 	//Head
-				"", 	//Start
-				"", 	//End
-				"", 	//Intermediate
-				"", 	//Through
-				"", 	//After end
-				"",		//Additional line through
-				"",		//Additional line after end
-				"", 	//Start of line
-				TreePrinter.LINE_SEPARATOR, 	//End of line
-				true, true);
+		super(true, true);
+		
+		HEAD = "";
+		FIRST_CHILD = "";
+		START = "";
+		END = "";
+		INTERMEDIATE = "";
+		THROUGH = "";
+		AFTEREND = "";
+		ADDITIONALLINETHROUGH = "";
+		ADDITIONALLINEAFTEREND = "";
+		START_OF_LINE = "";
+		END_OF_LINE = "" + TreePrinter.LINE_SEPARATOR;
 		
 	}
 	
 	@Override
-	public StringBuilder getNodeValue(PrintableTreeNode<String, GedcomLine> node) {
+	public StringBuilder getNodeValue(
+			PrintableTreeNode<String, GedcomLine> currentNode,
+			int currentNodeLevel, int treeNodeIndex, int childNodeIndex,
+			boolean lastChildNode) {
+		
 		StringBuilder sb = new StringBuilder();
-		int level = node.getAsTreeNode().getNodeLevel(true);
+		int level = getNodeLevel(currentNode);
+		
 		sb.append(GedcomFormatter.makeInset(level));
 		sb.append(level);
 		sb.append(" ");
-		sb.append(node.print());
+		sb.append(currentNode.print());
+		
 		return sb;
+		
 	}
 	
 	
