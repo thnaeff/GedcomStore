@@ -22,8 +22,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 
-import ch.thn.gedcom.data.GedcomCreationError;
-import ch.thn.gedcom.data.GedcomLine;
 import ch.thn.gedcom.data.GedcomNode;
 import ch.thn.gedcom.data.GedcomTree;
 import ch.thn.gedcom.printer.GedcomStructureHTMLPrinter;
@@ -32,7 +30,6 @@ import ch.thn.gedcom.printer.GedcomStructureTextPrinter;
 import ch.thn.gedcom.printer.GedcomStructureTreePrinter;
 import ch.thn.gedcom.store.GedcomParseException;
 import ch.thn.gedcom.store.GedcomStore;
-import ch.thn.util.tree.printable.printer.SimpleTreePrinter;
 
 /**
  * @author Thomas Naeff (github.com/thnaeff)
@@ -126,7 +123,13 @@ public class GedcomStoreTest {
 		System.out.println(indi.print(new GedcomStructureTextPrinter()));
 		System.out.println(indi.print(new GedcomStructureTreePrinter(true)));
 		
-		writeToFile("/home/thomas/Desktop/familienfest/gedcomtest.html", indi.print(new GedcomStructureHTMLPrinter("Test Tree")));
+		StringBuilder sb = new StringBuilder();
+		
+		GedcomStructureHTMLPrinter.appendHeader(sb, "Test GEDCOM Tree");
+		sb.append(indi.print(new GedcomStructureHTMLPrinter("Test Tree")));
+		GedcomStructureHTMLPrinter.appendFooter(sb);
+		
+		writeToFile("/home/thomas/Desktop/familienfest/gedcomtest.html", sb);
 		
 	}
 	
