@@ -21,6 +21,8 @@ import ch.thn.gedcom.data.GedcomLine;
 import ch.thn.util.tree.printable.PrintableTreeNode;
 import ch.thn.util.tree.printable.printer.SimpleTreePrinter;
 import ch.thn.util.tree.printable.printer.TreePrinter;
+import ch.thn.util.tree.printable.printer.TreePrinterLineContent;
+import ch.thn.util.tree.printable.printer.TreePrinterLineContent.ContentType;
 
 /**
  * A printer which prints the gedcom structure in text format. The output 
@@ -51,7 +53,7 @@ public class GedcomStructureTextPrinter extends SimpleTreePrinter<String, Gedcom
 	}
 	
 	@Override
-	public StringBuilder getNodeValue(
+	public TreePrinterLineContent[] getNodeValue(
 			PrintableTreeNode<String, GedcomLine> currentNode,
 			int currentNodeLevel, int treeNodeIndex, int childNodeIndex,
 			boolean lastChildNode) {
@@ -64,7 +66,7 @@ public class GedcomStructureTextPrinter extends SimpleTreePrinter<String, Gedcom
 		sb.append(" ");
 		sb.append(currentNode.print());
 		
-		return sb;
+		return new TreePrinterLineContent[] {new TreePrinterLineContent(ContentType.VALUE, sb.toString())};
 		
 	}
 	
