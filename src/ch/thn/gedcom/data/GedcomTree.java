@@ -45,11 +45,5 @@ public class GedcomTree extends GedcomNode {
 	public String getStructureName() {
 		return structureName;
 	}
-	
-	
-	@Override
-	public String print() {
-		return structureName;
-	}
 
 }

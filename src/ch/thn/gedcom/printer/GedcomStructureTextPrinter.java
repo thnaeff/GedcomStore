@@ -19,10 +19,8 @@ package ch.thn.gedcom.printer;
 import ch.thn.gedcom.GedcomFormatter;
 import ch.thn.gedcom.data.GedcomLine;
 import ch.thn.util.tree.printable.PrintableTreeNode;
-import ch.thn.util.tree.printable.printer.SimpleTreePrinter;
-import ch.thn.util.tree.printable.printer.TreePrinter;
-import ch.thn.util.tree.printable.printer.TreePrinterLineContent;
-import ch.thn.util.tree.printable.printer.TreePrinterLineContent.ContentType;
+import ch.thn.util.tree.printable.printer.TextTreePrinterLines;
+import ch.thn.util.tree.printable.printer.vertical.TextTreePrinter;
 
 /**
  * A printer which prints the gedcom structure in text format. The output 
@@ -32,11 +30,11 @@ import ch.thn.util.tree.printable.printer.TreePrinterLineContent.ContentType;
  * @author Thomas Naeff (github.com/thnaeff)
  *
  */
-public class GedcomStructureTextPrinter extends SimpleTreePrinter<String, GedcomLine> {
+public class GedcomStructureTextPrinter extends TextTreePrinter<String, GedcomLine> {
 
 	
 	public GedcomStructureTextPrinter() {
-		super(true, true);
+		super(true, true, false);
 		
 		HEAD = "";
 		FIRST_CHILD = "";
@@ -47,27 +45,27 @@ public class GedcomStructureTextPrinter extends SimpleTreePrinter<String, Gedcom
 		AFTEREND = "";
 		ADDITIONALLINETHROUGH = "";
 		ADDITIONALLINEAFTEREND = "";
-		START_OF_LINE = "";
-		END_OF_LINE = "" + TreePrinter.LINE_SEPARATOR;
 		
 	}
 	
+
 	@Override
-	public TreePrinterLineContent[] getNodeValue(
-			PrintableTreeNode<String, GedcomLine> currentNode,
-			int currentNodeLevel, int treeNodeIndex, int childNodeIndex,
-			boolean lastChildNode) {
+	protected TextTreePrinterLines getNodeData(PrintableTreeNode<String, GedcomLine> node) {
+		TextTreePrinterLines lines = new TextTreePrinterLines();
+		
+		int lineIndex = lines.addNewLine();
 		
 		StringBuilder sb = new StringBuilder();
-		int level = getNodeLevel(currentNode);
+		int level = node.getNodeLevel();
 		
 		sb.append(GedcomFormatter.makeInset(level));
 		sb.append(level);
 		sb.append(" ");
-		sb.append(currentNode.print());
+		sb.append(node.toString());
 		
-		return new TreePrinterLineContent[] {new TreePrinterLineContent(ContentType.VALUE, sb.toString())};
+		lines.addValue(lineIndex, sb.toString());
 		
+		return lines;
 	}
 	
 	

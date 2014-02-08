@@ -17,17 +17,17 @@
 package ch.thn.gedcom.printer;
 
 import ch.thn.gedcom.data.GedcomLine;
-import ch.thn.util.tree.printable.printer.DebugTreePrinter;
+import ch.thn.util.tree.printable.printer.vertical.DebugTextTreePrinter;
 
 /**
- * Simply extends {@link DebugTreePrinter} and is very useful for debugging 
+ * Simply extends {@link DebugVerticalTreePrinter} and is very useful for debugging 
  * a gedcom tree when building it.
  * 
  * @author Thomas Naeff (github.com/thnaeff)
  * 
- * @see DebugTreePrinter
+ * @see DebugVerticalTreePrinter
  */
-public class GedcomStructureTreePrinter extends DebugTreePrinter<String, GedcomLine> {
+public class GedcomStructureTreePrinter extends DebugTextTreePrinter<String, GedcomLine> {
 
 	/**
 	 * 
@@ -35,8 +35,7 @@ public class GedcomStructureTreePrinter extends DebugTreePrinter<String, GedcomL
 	 * @param showAllNodes
 	 */
 	public GedcomStructureTreePrinter(boolean showAllNodes) {
-		super(!showAllNodes, !showAllNodes);
-		
+		super(!showAllNodes, !showAllNodes, false);
 	}
 	
 	

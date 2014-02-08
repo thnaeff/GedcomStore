@@ -71,9 +71,13 @@ public class GedcomStoreTest {
 //		header11.addChildLine("CORP");
 //		
 //		header111.setTagLineValue("version");
-				
-		System.out.println(header.print(new GedcomStructureTextPrinter()));
-		System.out.println(header.print(new GedcomStructureTreePrinter(true)));
+		
+		GedcomStructureTextPrinter textPrinter = new GedcomStructureTextPrinter();
+		GedcomStructureTreePrinter structureTreePrinter = new GedcomStructureTreePrinter(true);
+		GedcomStructureHTMLPrinter htmlPrinter = new GedcomStructureHTMLPrinter(true);
+		
+		System.out.println(textPrinter.print(header));
+		System.out.println(structureTreePrinter.print(header));
 		
 		
 		
@@ -120,14 +124,14 @@ public class GedcomStoreTest {
 		
 		System.out.println(indi1.followPath("INDIVIDUAL_EVENT_STRUCTURE;DEAT", "DEAT", "INDIVIDUAL_EVENT_DETAIL", "EVENT_DETAIL", "DATE"));
 		
-		System.out.println(indi.print(new GedcomStructureTextPrinter()));
-		System.out.println(indi.print(new GedcomStructureTreePrinter(true)));
+		System.out.println(textPrinter.print(indi));
+		System.out.println(structureTreePrinter.print(indi));
 		
 		StringBuilder sb = new StringBuilder();
 		
-		GedcomStructureHTMLPrinter.appendHeader(sb, "Test GEDCOM Tree");
-		sb.append(indi.print(new GedcomStructureHTMLPrinter("Test Tree")));
-		GedcomStructureHTMLPrinter.appendFooter(sb);
+		htmlPrinter.appendSimpleHeader(sb, "GedcomStore Test Tree");
+		sb.append(htmlPrinter.print(indi));
+		htmlPrinter.appendSimpleFooter(sb);
 		
 		writeToFile("/home/thomas/Desktop/familienfest/gedcomtest.html", sb);
 		

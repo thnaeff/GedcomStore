@@ -17,8 +17,7 @@
 package ch.thn.gedcom.printer;
 
 import ch.thn.gedcom.data.GedcomLine;
-import ch.thn.util.tree.printable.printer.HTMLTreePrinter;
-
+import ch.thn.util.tree.printable.printer.vertical.HTMLTreePrinter;
 /**
  * This gedcom data printer prints the HTML code to view the gedcom structure 
  * as HTML file, for example in a web browser.
@@ -29,21 +28,25 @@ import ch.thn.util.tree.printable.printer.HTMLTreePrinter;
 public class GedcomStructureHTMLPrinter extends HTMLTreePrinter<String, GedcomLine> {
 
 	
-	public GedcomStructureHTMLPrinter(String treeTitle) {
-		//Do not use colors since the tree lines are not shown anyways
-		super(false, true, true);
+	/**
+	 * 
+	 * 
+	 * @param showLines
+	 */
+	public GedcomStructureHTMLPrinter(boolean showLines) {
+		super(false, showLines, true, false);
 		
-//		HEAD = null;
-//		FIRST_CHILD = null;
-//		START = "├─";
-//		END = "└─";
-//		INTERMEDIATE = "├─";
-//		THROUGH = "│";
-//		AFTEREND = "";
-//		ADDITIONALLINETHROUGH = "│";
-//		ADDITIONALLINEAFTEREND = null;
-//		START_OF_LINE = "<tr>";
-//		END_OF_LINE = "</tr>" + TreePrinter.LINE_SEPARATOR;
+		if (!showLines) {
+			HEAD = null;
+			FIRST_CHILD = null;
+			START = HTMLSPACE + HTMLSPACE + HTMLSPACE;
+			END = HTMLSPACE + HTMLSPACE + HTMLSPACE;
+			INTERMEDIATE = HTMLSPACE + HTMLSPACE + HTMLSPACE;
+			THROUGH = HTMLSPACE + HTMLSPACE;
+			AFTEREND = "";
+			ADDITIONALLINETHROUGH = HTMLSPACE + HTMLSPACE;
+			ADDITIONALLINEAFTEREND = null;
+		}
 				
 	}
 	
