@@ -16,10 +16,15 @@
  */
 package ch.thn.gedcom.printer;
 
+import java.util.ArrayList;
+
 import ch.thn.gedcom.GedcomFormatter;
 import ch.thn.gedcom.data.GedcomLine;
 import ch.thn.util.tree.printable.PrintableTreeNode;
 import ch.thn.util.tree.printable.printer.TextTreePrinterLines;
+import ch.thn.util.tree.printable.printer.TreePrinter;
+import ch.thn.util.tree.printable.printer.TreePrinterNode;
+import ch.thn.util.tree.printable.printer.TreePrinterTree;
 import ch.thn.util.tree.printable.printer.vertical.TextTreePrinter;
 
 /**
@@ -54,19 +59,56 @@ public class GedcomStructureTextPrinter extends TextTreePrinter<String, GedcomLi
 		TextTreePrinterLines lines = new TextTreePrinterLines();
 		
 		int lineIndex = lines.addNewLine();
-		
-		StringBuilder sb = new StringBuilder();
-		int level = node.getNodeLevel();
-		
-		sb.append(GedcomFormatter.makeInset(level));
-		sb.append(level);
-		sb.append(" ");
-		sb.append(node.toString());
-		
-		lines.addValue(lineIndex, sb.toString());
+		lines.addValue(lineIndex, node.toString());
 		
 		return lines;
 	}
 	
-	
+	@Override
+	protected StringBuilder createPrinterOutput(
+			ArrayList<TreePrinterTree<String, TextTreePrinterLines>> preparedTrees) {
+		
+		StringBuilder sb = new StringBuilder();
+		
+		for (TreePrinterNode<String, TextTreePrinterLines> tree : preparedTrees) {
+			TextTreePrinterLines lines = null;
+			TreePrinterNode<String, TextTreePrinterLines> nextTreeLine = tree;
+			
+			while (nextTreeLine != null) {
+				lines = nextTreeLine.getNodeValue();
+				
+				//All the lines
+				for (int i = 0; i < lines.getLineCount(); i++) {
+					//All the prefixes
+					for (int j = 0; j < lines.getPrefixCount(i); j++) {
+						sb.append(lines.getPrefix(i, j));
+					}
+					
+					//All the values
+					for (int j = 0; j < lines.getValueCount(i); j++) {
+						if (i == 0 && j == 0) {
+							//Node level in front of the first value and only on 
+							//the first line of a node
+							int level = nextTreeLine.getNodeLevel();
+							sb.append(GedcomFormatter.makeInset(level));
+							sb.append(level);
+							sb.append(" ");
+						}
+						//Value
+						sb.append(lines.getValue(i, j));
+					}
+					
+					sb.append(TreePrinter.LINE_SEPARATOR);
+				}
+				
+				nextTreeLine = nextTreeLine.getNextPrinterNodeVertical();
+			}
+			
+			//Space before a new tree starts
+			sb.append(TreePrinter.LINE_SEPARATOR);
+		}
+		
+		return sb;
+		
+	}
 }
