@@ -25,7 +25,7 @@ import ch.thn.util.tree.printable.printer.TextTreePrinterLines;
 import ch.thn.util.tree.printable.printer.TreePrinter;
 import ch.thn.util.tree.printable.printer.TreePrinterNode;
 import ch.thn.util.tree.printable.printer.TreePrinterTree;
-import ch.thn.util.tree.printable.printer.vertical.TextTreePrinter;
+import ch.thn.util.tree.printable.printer.vertical.VerticalTextTreePrinter;
 
 /**
  * A printer which prints the gedcom structure in text format. The output 
@@ -35,7 +35,7 @@ import ch.thn.util.tree.printable.printer.vertical.TextTreePrinter;
  * @author Thomas Naeff (github.com/thnaeff)
  *
  */
-public class GedcomStructureTextPrinter extends TextTreePrinter<String, GedcomLine> {
+public class GedcomStructureTextPrinter extends VerticalTextTreePrinter<String, GedcomLine> {
 
 	
 	public GedcomStructureTextPrinter() {

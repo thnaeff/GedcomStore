@@ -17,7 +17,7 @@
 package ch.thn.gedcom.printer;
 
 import ch.thn.gedcom.data.GedcomLine;
-import ch.thn.util.tree.printable.printer.vertical.DebugTextTreePrinter;
+import ch.thn.util.tree.printable.printer.vertical.VerticalDebugTextTreePrinter;
 
 /**
  * Simply extends {@link DebugVerticalTreePrinter} and is very useful for debugging 
@@ -27,7 +27,7 @@ import ch.thn.util.tree.printable.printer.vertical.DebugTextTreePrinter;
  * 
  * @see DebugVerticalTreePrinter
  */
-public class GedcomStructureTreePrinter extends DebugTextTreePrinter<String, GedcomLine> {
+public class GedcomStructureTreePrinter extends VerticalDebugTextTreePrinter<String, GedcomLine> {
 
 	/**
 	 * 

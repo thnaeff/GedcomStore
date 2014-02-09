@@ -17,7 +17,7 @@
 package ch.thn.gedcom.printer;
 
 import ch.thn.gedcom.data.GedcomLine;
-import ch.thn.util.tree.printable.printer.vertical.HTMLTreePrinter;
+import ch.thn.util.tree.printable.printer.vertical.VerticalHTMLTreePrinter;
 /**
  * This gedcom data printer prints the HTML code to view the gedcom structure 
  * as HTML file, for example in a web browser.
@@ -25,7 +25,7 @@ import ch.thn.util.tree.printable.printer.vertical.HTMLTreePrinter;
  * @author Thomas Naeff (github.com/thnaeff)
  *
  */
-public class GedcomStructureHTMLPrinter extends HTMLTreePrinter<String, GedcomLine> {
+public class GedcomStructureHTMLPrinter extends VerticalHTMLTreePrinter<String, GedcomLine> {
 
 	
 	/**

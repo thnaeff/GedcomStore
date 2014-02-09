@@ -26,6 +26,7 @@ import ch.thn.gedcom.store.GedcomStoreLine;
 import ch.thn.gedcom.store.GedcomStoreStructure;
 import ch.thn.util.tree.TreeNodeException;
 import ch.thn.util.tree.printable.PrintableTreeNode;
+import ch.thn.util.tree.printable.printer.TreePrinter;
 
 /**
  * @author Thomas Naeff (github.com/thnaeff)
@@ -784,23 +785,23 @@ public class GedcomNode extends PrintableTreeNode<String, GedcomLine> {
 	}
 	
 	@Override
-	public boolean isInvisibleNode() {
+	public boolean isInvisibleNode(TreePrinter<String, GedcomLine, ?, ?> printer) {
 		//Do not print structure lines
 		if (getNodeValue() != null && getNodeValue().isStructureLine()) {
 			return true;
 		}
 		
-		return super.isInvisibleNode();
+		return super.isInvisibleNode(printer);
 	}
 
 	@Override
-	public boolean printNode() {
+	public boolean printNode(TreePrinter<String, GedcomLine, ?, ?> printer) {
 		//Always print the head
 		if (isHeadNode()) {
 			return true;
 		}
 		
-		return !skipLinePrint(this, false, false);
+		return !skipLinePrint(this, false, false, printer);
 	}
 	
 	/**
@@ -812,10 +813,11 @@ public class GedcomNode extends PrintableTreeNode<String, GedcomLine> {
 	 * @param node
 	 * @param printEmptyLines
 	 * @param printLinesWithNoValueSet
+	 * @param printer
 	 * @return
 	 */
 	private boolean skipLinePrint(GedcomNode node, boolean printEmptyLines,
-			boolean printLinesWithNoValueSet) {
+			boolean printLinesWithNoValueSet, TreePrinter<String, GedcomLine, ?, ?> printer) {
 		GedcomLine line = node.getNodeValue();
 		boolean skip = false;
 
@@ -848,12 +850,12 @@ public class GedcomNode extends PrintableTreeNode<String, GedcomLine> {
 			LinkedList<PrintableTreeNode<String, GedcomLine>> nodes = node.getChildNodes();
 
 			for (PrintableTreeNode<String, GedcomLine> n : nodes) {
-				if (((GedcomNode)n).forcePrint()) {
+				if (((GedcomNode)n).forcePrint(printer)) {
 					//Do not skip, because a lower level node is forced to be printed
 					return false;
 				}
 				
-				if (!skipLinePrint((GedcomNode)n, printEmptyLines, printLinesWithNoValueSet)) {
+				if (!skipLinePrint((GedcomNode)n, printEmptyLines, printLinesWithNoValueSet, printer)) {
 					//A tag line found which should not be skipped
 					return false;
 				} else {
