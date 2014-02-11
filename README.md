@@ -2,7 +2,7 @@
 **A library to parse a [lineage-linked grammar file](http://homepages.rootsweb.ancestry.com/~pmcbride/gedcom/55gcch2.htm) and build a valid [GEDCOM](http://en.wikipedia.org/wiki/GEDCOM)-structure according to the parsed definitions**
 
 GedcomStore is a library written in Java to parse lineage-linked grammar from a text file. It then gives access to the parsed structures in order to create a valid GEDCOM ouput.
-Since the structures are created according to the grammar file, the output does not have to be validated against the GEDCOM structure - only valid ouput which matches the given input file can be created.
+Since the structures are created according to the grammar file, the output does not have to be validated against the GEDCOM structure - only valid ouput which matches the given input file can be created. However, the values itself are not validated (see "Not yet implemented").
 
 
 ## Key features
@@ -20,7 +20,7 @@ Since the structures are created according to the grammar file, the output does 
 * Simple output generation with various printer classes
 	* `GedcomStorePrinter`: To print the content of the `GedcomStore`, with various options like the structure depth or the inclusion/exclusion of structures
 	* `GedcomStructureTreePrinter`: Prints a tree of the whole gedcom structure. It has an option to even print invisible tree nodes and is very useful for debugging when creating a structure
-	* `GedcomStructureTextPrinter`: Prints a gedcom structure in text. The output of this printer can be saved in a text file and imported in any software which supports the gedcom format
+	* `GedcomStructureTextPrinter`: Prints a gedcom structure as text. The output of this printer can be saved in a text file and imported in any software which supports the GEDCOM format
 	* `GedcomStructureHTMLPrinter`: Prints the gedcom structure formatted with HTML. Save this output in a HTML file to view the structure in a web browser
 	* A `GedcomNode` is an extension of the `TreeNode` in my Util library, thus any `TreeNodePrinter` can be used for printing and new printers can be created by extending that class.
 
@@ -101,13 +101,14 @@ The following code line gets an INDIVIDUAL_RECORD and creates recursively all th
 
 ```java
 GedcomTree tree = store.getGedcomTree("INDIVIDUAL_RECORD");
+tree.addMandatoryChildLines(true);
 ```
 
 
 
 
 Now, starting  the head of the tree, you can navigate throught the structure in two ways. Either step by step by using the `addChildLine`, `getChildLine`, `getParentLine` methods etc., or simply by using one of the the methods `followPath`, `followPathCreate`, `createPath`, `createPathEnd` (some of them also take care of any missing lines or create new paths).
-The following lines show the usage with two examples.
+The following lines show the usage with three examples.
 
 ```java
 GedcomNode node1 = tree.getChildLine("INDI").addChildLine("PERSONAL_NAME_STRUCTURE").addChildLine("NAME");
@@ -126,14 +127,14 @@ The second and third ways are easier to use, but also slower (it always has to f
 
 
 
-For each `GedcomNode`, values can be set and retreived (as long as that line acaually has a value or xref field). As defined in the lineage-linked grammar, a line can (but must not) have a value and/or a xref field. The value can be set with `setTagLineValue`, the xref with `setTagLineXRef` (the getter methods are `getTagLineXRef` and `getTagLineValue`).
+For each `GedcomNode`, values can be set and retreived (as long as that line actually has a value or xref field). As defined in the lineage-linked grammar, a line can (but must not) have a value and/or a xref field. The value can be set with `setTagLineValue`, the xref with `setTagLineXRef` (the getter methods are `getTagLineXRef` and `getTagLineValue`).
 
 ```java
 node.setTagLineValue("some value");
 ```
 
 
-Now that we have created a little structure with some lines, it is time to print the structure. Since a `GedcomNode` is extended from `TreeNode` (from my Util library), any of the `TreeNodePrinter`s can be used to print the gedcom tree. However, `GedcomStore` comes with a few printers which are prepared for the use with the gedcom structures: `GedcomStructureTreePrinter`, `GedcomStructureTextPrinter` and `GedcomStructureHTMLPrinter`. See the "Key Features" section in this readme to get a short description of each printer.
+Now that we have created a little structure with some lines, it is time to print the structure. Since a `GedcomNode` is extended from `TreeNode` (from my [Util](http://github.com/thnaeff/Util) library), any of the `TreeNodePrinter`s can be used to print the gedcom tree. However, `GedcomStore` comes with a few printers which are prepared for the use with the gedcom structures: `GedcomStructureTreePrinter`, `GedcomStructureTextPrinter` and `GedcomStructureHTMLPrinter`. See the "Key Features" section in this readme to get a short description of each printer.
 
 
 ```java

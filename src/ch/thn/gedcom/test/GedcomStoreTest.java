@@ -60,7 +60,8 @@ public class GedcomStoreTest {
 		GedcomTree header = store.getGedcomTree("HEADER");
 		
 		GedcomNode header1 = header.addChildLine("HEAD");
-		header1.addAllChildLines(true);
+//		header1.addAllChildLines(true);
+//		header1.addMandatoryChildLines(true);
 //		header1.newLine();
 //		
 //		GedcomNode header11 = header1.addChildLine("SOUR");
