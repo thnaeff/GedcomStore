@@ -86,7 +86,7 @@ At first, an instance of `GedcomStore` is needed and the lineage-linked grammar 
 ```java
 GedcomStore store = new GedcomStore();
 try{
-	store.parse("PATH_TO_FILE/GedcomNodes_5.5.1.gedg");
+	store.parse("PATH_TO_FILE/gedcomobjects_5.5.1.gedg");
 } catch (GedcomParseException e) {
 	e.printStackTrace();
 }
