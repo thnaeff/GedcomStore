@@ -35,7 +35,7 @@ public class GedcomStructureTreePrinter extends VerticalDebugTextTreePrinter<Str
 	 * @param showAllNodes
 	 */
 	public GedcomStructureTreePrinter(boolean showAllNodes) {
-		super(!showAllNodes, !showAllNodes, false);
+		super(!showAllNodes, !showAllNodes, false, false);
 	}
 	
 	

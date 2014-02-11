@@ -39,7 +39,7 @@ public class GedcomStructureTextPrinter extends VerticalTextTreePrinter<String, 
 
 	
 	public GedcomStructureTextPrinter() {
-		super(true, true, false);
+		super(true, true, false, false);
 		
 		HEAD = "";
 		FIRST_CHILD = "";

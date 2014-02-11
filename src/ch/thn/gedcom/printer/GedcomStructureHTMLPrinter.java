@@ -34,7 +34,7 @@ public class GedcomStructureHTMLPrinter extends VerticalHTMLTreePrinter<String, 
 	 * @param showLines
 	 */
 	public GedcomStructureHTMLPrinter(boolean showLines) {
-		super(false, showLines, true, false);
+		super(false, showLines, true, false, false);
 		
 		if (!showLines) {
 			HEAD = null;
