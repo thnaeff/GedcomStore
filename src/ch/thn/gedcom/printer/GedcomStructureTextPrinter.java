@@ -37,9 +37,17 @@ import ch.thn.util.tree.printable.printer.vertical.VerticalTextTreePrinter;
  */
 public class GedcomStructureTextPrinter extends VerticalTextTreePrinter<String, GedcomLine> {
 
+	private boolean flatStructure = false;
 	
-	public GedcomStructureTextPrinter() {
+	/**
+	 * 
+	 * 
+	 * @param flatStructure If set to <code>true</code>, there is no indentation 
+	 * for the output and all lines are printed all the way on the left.
+	 */
+	public GedcomStructureTextPrinter(boolean flatStructure) {
 		super(true, true, false, false);
+		this.flatStructure = flatStructure;
 		
 		HEAD = "";
 		FIRST_CHILD = "";
@@ -90,7 +98,10 @@ public class GedcomStructureTextPrinter extends VerticalTextTreePrinter<String, 
 							//Node level in front of the first value and only on 
 							//the first line of a node
 							int level = nextTreeLine.getNodeLevel();
-							sb.append(GedcomFormatter.makeInset(level));
+							if (!flatStructure) {
+								sb.append(GedcomFormatter.makeInset(level));
+							}
+							
 							sb.append(level);
 							sb.append(" ");
 						}

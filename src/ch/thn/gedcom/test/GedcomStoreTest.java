@@ -72,7 +72,7 @@ public class GedcomStoreTest {
 //		
 //		header111.setTagLineValue("version");
 		
-		GedcomStructureTextPrinter textPrinter = new GedcomStructureTextPrinter();
+		GedcomStructureTextPrinter textPrinter = new GedcomStructureTextPrinter(true);
 		GedcomStructureTreePrinter structureTreePrinter = new GedcomStructureTreePrinter(true);
 		GedcomStructureHTMLPrinter htmlPrinter = new GedcomStructureHTMLPrinter(true);
 		
