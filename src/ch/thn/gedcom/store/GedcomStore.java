@@ -50,9 +50,9 @@ public class GedcomStore {
 	 */
 	public static enum FileHeaderKeywords {
 		/** The version of the gedcom grammar */
-		GRAMPS_VERSION("GRAMPS_VERSION"), 
+		GEDCOM_VERSION("GEDCOM_VERSION"), 
 		/** The source of the gedcom grammar (The website/file/book/...) */
-		GRAMPS_SOURCE("GRAMPS_SOURCE"), 
+		GEDCOM_SOURCE("GEDCOM_SOURCE"), 
 		/**
 		 * A description about the gedcom grammar file. List any modifications 
 		 * of the grammar structures here and give any additional information.<br>
@@ -60,7 +60,7 @@ public class GedcomStore {
 		 * keyword and the next keyword or the first structure will be taken 
 		 * as description.
 		 */
-		GRAMPS_DESCRIPTION("GRAMPS_DESCRIPTION");
+		GEDCOM_DESCRIPTION("GEDCOM_DESCRIPTION");
 		
 		protected String value = null;
 		
@@ -124,8 +124,37 @@ public class GedcomStore {
 		structures.clear();
 		idToVariationsLinks.clear();
 		variations.clear();
+		loadedFileDescription.clear();
+		loadedFileSource = null;
+		loadedFileVersion = null;
 	}
 	
+	/**
+	 * Returns the file version of the loaded GEDCOM grammar file
+	 * 
+	 * @return
+	 */
+	public String getFileVersion() {
+		return loadedFileVersion;
+	}
+	
+	/**
+	 * Returns the source information from the loaded GEDCOM grammar file
+	 * 
+	 * @return
+	 */
+	public String getFileSource() {
+		return loadedFileSource;
+	}
+	
+	/**
+	 * Returns the description of the loaded GEDCOM grammar file
+	 * 
+	 * @return
+	 */
+	public ArrayList<String> getFileDescription() {
+		return loadedFileDescription;
+	}
 	
 	/**
 	 * Parses the given lineage-linked grammar file and adds all the structures 
@@ -172,11 +201,11 @@ public class GedcomStore {
 				//file header lines
 				if (!firstStructureFound) {
 					if (!StringUtil.matches(GedcomHelper.structureNamePattern, line)) {
-						if (line.startsWith(FileHeaderKeywords.GRAMPS_VERSION.value + "=")) {
+						if (line.startsWith(FileHeaderKeywords.GEDCOM_VERSION.value + "=")) {
 							loadedFileVersion = line.split("=")[1];
-						} else if (line.startsWith(FileHeaderKeywords.GRAMPS_SOURCE.value + "=")) {
+						} else if (line.startsWith(FileHeaderKeywords.GEDCOM_SOURCE.value + "=")) {
 							loadedFileSource = line.split("=")[1];
-						} else if (line.startsWith(FileHeaderKeywords.GRAMPS_DESCRIPTION.value + "=")) {
+						} else if (line.startsWith(FileHeaderKeywords.GEDCOM_DESCRIPTION.value + "=")) {
 							String[] s = line.split("=");
 							if (s.length > 0 && s[1].length() > 0) {
 								loadedFileDescription.add(s[1]);

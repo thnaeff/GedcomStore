@@ -1,7 +1,7 @@
-GRAMPS_DESCRIPTION=DRAFT Release 5.5.1
+GEDCOM_DESCRIPTION=DRAFT Release 5.5.1
 For testing
-GRAMPS_SOURCE=http://www.phpgedview.net/ged551-5.pdf
-GRAMPS_VERSION=5.5.1
+GEDCOM_SOURCE=http://www.phpgedview.net/ged551-5.pdf
+GEDCOM_VERSION=5.5.1
 
 
 

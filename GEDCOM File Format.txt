@@ -1,0 +1,29 @@
+GEDCOM grammar file (*.gedg) format for import in GedcomStore
+---------------------------------------------------------------
+
+The format of the GEDCOM grammar files which contain the data structures needs to follow a simple format. Take a look at the given GEDCOM files like gedcomobjects_5.5.gedg to see examples of the format.
+
+Only these few simple steps have to be followed to create a valid GEDCOM input file:
+- The file extension has to be .gedg
+- There has to be a header (in front of any GEDCOM grammar data) with the keywords GEDCOM_VERSION, GEDCOM_SOURCE and GEDCOM_DESCRIPTION, one per line followed by an equal "=" sign and the keyword data. The order of those keywords does not matter.
+  - GEDCOM_VERSION: The version of the GEDCOM grammar in the file (a single line)
+  - GEDCOM_SOURCE: The source of the GEDCOM grammar (a website/document/...) (a single line)
+  - GEDCOM_DESCRIPTION: A description about the GEDCOM grammar file. List any modifications of the grammar structures here and give any additional information. The description can have multiple lines (empty lines are ignored). Everything after the GEDCOM_DESCRIPTION keyword and the next keyword or the first structure will be taken as description.
+
+Those tags are defined in the enum 'GedcomStore.FileHeaderKeywords'.
+
+
+An example:
+------------
+
+GEDCOM_DESCRIPTION=DRAFT Release 5.5.1
+For testing
+GEDCOM_SOURCE=http://www.phpgedview.net/ged551-5.pdf
+GEDCOM_VERSION=5.5.1
+
+
+HEADER:=    ....this is where the first GEDCOM structure starts
+n HEAD    {1:1}
+  +1 SOUR <APPROVED_SYSTEM_ID>    {1:1}
+  
+

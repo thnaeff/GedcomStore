@@ -1,6 +1,6 @@
-GRAMPS_VERSION=5.5.1
-GRAMPS_SOURCE=http://www.phpgedview.net/ged551-5.pdf
-GRAMPS_DESCRIPTION=
+GEDCOM_VERSION=5.5.1
+GEDCOM_SOURCE=http://www.phpgedview.net/ged551-5.pdf
+GEDCOM_DESCRIPTION=
 Gedcom Standard
 DRAFT Release 5.5.1
 http://www.phpgedview.net/ged551-5.pdf
