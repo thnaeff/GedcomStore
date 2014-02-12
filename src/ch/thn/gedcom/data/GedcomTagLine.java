@@ -17,6 +17,7 @@
 package ch.thn.gedcom.data;
 
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 
 import ch.thn.gedcom.GedcomFormatter;
 import ch.thn.gedcom.store.GedcomStoreLine;
@@ -204,7 +205,7 @@ public class GedcomTagLine extends GedcomLine {
 	 * Sets the value field of this tag line
 	 * 
 	 * @param value
-	 * @return
+	 * @return <code>null</code> if setting the value failed
 	 */
 	public GedcomTagLine setValue(String value) {
 		if (!getStoreLine().hasValueNames()) {
@@ -213,12 +214,34 @@ public class GedcomTagLine extends GedcomLine {
 					" does not have an value-field.");
 		}
 		
-		HashSet<String> possibleValues = getStoreLine().getValuePossibilities();
+		GedcomStoreLine storeLine = getStoreLine();
+		
+		HashSet<String> possibleValues = storeLine.getValuePossibilities();
 		
 		if (possibleValues.size() > 0 && !possibleValues.contains(value)) {
 			throw new GedcomAccessError(value + " is not a possible value for line " + 
-					getTag() + " in " + getStoreLine().getParentBlock().getStoreStructure().getStructureName() + 
+					getTag() + " in " + storeLine.getParentBlock().getStoreStructure().getStructureName() + 
 					". Possible values are: " + GedcomFormatter.makeOrList(possibleValues, "", ""));
+		}
+		
+		GedcomDataValidator validator = storeLine.getParentBlock().getStoreStructure().getStore().getValidator();
+		LinkedHashSet<String> valueNames = storeLine.getValueNames();
+		
+		if (validator != null) {
+			boolean ok = true;
+			
+			for (String valueName : valueNames) {
+				if (!validator.validateValue(this, valueName, value)) {
+					ok = false;
+				} else {
+					ok = true;
+					break;
+				}
+			}
+			
+			if (!ok) {
+				return null;
+			}
 		}
 		
 		this.value = value;
@@ -230,13 +253,35 @@ public class GedcomTagLine extends GedcomLine {
 	 * Sets the xref field of this tag line
 	 * 
 	 * @param xref
-	 * @return
+	 * @return <code>null</code> if setting the xref failed
 	 */
 	public GedcomTagLine setXRef(String xref) {
 		if (!getStoreLine().hasXRefNames()) {
 			throw new GedcomAccessError("[ERROR] Line " + getTag() + " in " + 
 					getStoreLine().getParentBlock().getStoreStructure().getStructureName() + 
 					" does not have an xref-field.");
+		}
+		
+		GedcomStoreLine storeLine = getStoreLine();
+		
+		GedcomDataValidator validator = storeLine.getParentBlock().getStoreStructure().getStore().getValidator();
+		LinkedHashSet<String> xrefNames = storeLine.getXRefNames();
+		
+		if (validator != null) {
+			boolean ok = true;
+			
+			for (String xrefName : xrefNames) {
+				if (!validator.validateXRef(this, xrefName, xref)) {
+					ok = false;
+				} else {
+					ok = true;
+					break;
+				}
+			}
+			
+			if (!ok) {
+				return null;
+			}
 		}
 		
 		this.xref = xref;

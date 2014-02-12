@@ -29,6 +29,7 @@ import ch.thn.gedcom.GedcomFormatter;
 import ch.thn.gedcom.GedcomHelper;
 import ch.thn.gedcom.data.GedcomAccessError;
 import ch.thn.gedcom.data.GedcomCreationError;
+import ch.thn.gedcom.data.GedcomDataValidator;
 import ch.thn.gedcom.data.GedcomTree;
 import ch.thn.gedcom.printer.GedcomStorePrinter;
 import ch.thn.util.StringUtil;
@@ -99,6 +100,8 @@ public class GedcomStore {
 	 */
 	private HashMap<String, LinkedList<GedcomStoreStructure>> variations = null;
 	
+	private GedcomDataValidator validator = null;
+	
 	private String loadedFileVersion = null;
 	private String loadedFileSource = null;
 	private ArrayList<String> loadedFileDescription = null;
@@ -115,6 +118,25 @@ public class GedcomStore {
 		idToVariationsLinks = new HashMap<String, HashMap<String,LinkedList<GedcomStoreStructure>>>();
 		variations = new HashMap<String, LinkedList<GedcomStoreStructure>>();
 		loadedFileDescription = new ArrayList<String>();
+	}
+	
+	/**
+	 * Set a validator which should be used when setting values or xrefs on 
+	 * the gedcom data
+	 * 
+	 * @param validator
+	 */
+	public void setValidator(GedcomDataValidator validator) {
+		this.validator = validator;
+	}
+	
+	/**
+	 * 
+	 * 
+	 * @return
+	 */
+	public GedcomDataValidator getValidator() {
+		return validator;
 	}
 	
 	/**

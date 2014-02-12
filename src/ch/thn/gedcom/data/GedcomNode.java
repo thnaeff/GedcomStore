@@ -455,7 +455,7 @@ public class GedcomNode extends PrintableTreeNode<String, GedcomLine> {
 	 * Sets the value of this node
 	 * 
 	 * @param value
-	 * @return
+	 * @return <code>null</code> if setting the value failed
 	 */
 	public GedcomNode setTagLineValue(String value) {
 		if (!getNodeValue().isTagLine()) {

@@ -45,6 +45,7 @@ public class GedcomStoreTest {
 		GedcomStore store = new GedcomStore();
 		
 		store.showParsingOutput(false);
+		store.setValidator(new GedcomDataValidatorTest());
 		
 		try {
 			store.parse("/home/thomas/Projects/java/GedcomStore/gedcomobjects_5.5.1_test.gedg");
@@ -60,7 +61,7 @@ public class GedcomStoreTest {
 		GedcomTree header = store.getGedcomTree("HEADER");
 		
 		GedcomNode header1 = header.addChildLine("HEAD");
-//		header1.addAllChildLines(true);
+		header1.addAllChildLines(true);
 //		header1.addMandatoryChildLines(true);
 //		header1.newLine();
 //		

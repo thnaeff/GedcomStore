@@ -184,6 +184,7 @@ public class GedcomStoreLine {
 			} else if (tagIndex != -1 && i == tagIndex + 1 
 					&& StringUtil.contains(GedcomHelper.multipleValuePossibilities, splitLine[i])) {
 				//Value possibilities. They can only appear right after the tag
+				//Example: DEAT [Y|<NULL>]
 				
 				String[] possibilities = StringUtil.replaceAll(GedcomHelper.multipleValuesReplace, splitLine[i], "").split("\\|");
 				
