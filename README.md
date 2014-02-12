@@ -2,7 +2,7 @@
 **A library to parse a [lineage-linked grammar file](http://homepages.rootsweb.ancestry.com/~pmcbride/gedcom/55gcch2.htm) and build a valid [GEDCOM](http://en.wikipedia.org/wiki/GEDCOM)-structure according to the parsed definitions**
 
 GedcomStore is a library written in Java to parse lineage-linked grammar from a text file. It then gives access to the parsed structures in order to create a valid GEDCOM ouput.
-Since the structures are created according to the grammar file, the output does not have to be validated against the GEDCOM structure - only valid ouput which matches the given input file can be created. However, the values itself are not validated (see "Not yet implemented").
+Since the structures are created according to the grammar file, the output does not have to be validated against the GEDCOM structure - only valid ouput which matches the given input file can be created. However, the values itself are not validated automatically but validators can be implemented (see "Not yet implemented").
 
 Download the library [Version 0.1 as .jar file here](https://github.com/thnaeff/GedcomStore/blob/master/GedcomStore_0.1.jar?raw=true).
 
@@ -180,7 +180,7 @@ More examples can be found in src/ch/thn/gedcom/test/
 
 
 # Not yet implemented
-* Value validation (Some values only allow certain formats/lengths/...)
+* Value validation -> It is possible to write your own value/xref validator by extending the `GedcomDataValidator` class and adding it to the `GedcomStore` with setValidator
 
 ********************************************************************************************************
 
