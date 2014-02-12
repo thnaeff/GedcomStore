@@ -180,7 +180,7 @@ More examples can be found in src/ch/thn/gedcom/test/
 
 
 # Not yet implemented
-* Value validation -> It is possible to write your own value/xref validator by extending the `GedcomDataValidator` class and adding it to the `GedcomStore` with setValidator
+* Value validation (Some values only allow certain formats/lengths/...)
 
 ********************************************************************************************************
 
