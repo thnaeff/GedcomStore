@@ -91,12 +91,18 @@ public class GedcomStoreTest {
 		
 		indi1.setTagLineXRef("I987");
 		
-		GedcomNode indi11 = indi1.addChildLine("SEX").setTagLineValue("M");
 		GedcomNode indi12 = indi1.addChildLine("INDIVIDUAL_EVENT_STRUCTURE", "BIRT");
+		GedcomNode indi121 = indi12.addChildLine("BIRT");
+		indi121.setTagLineValue("Y");
+		indi121.addChildLine("INDIVIDUAL_EVENT_DETAIL").addChildLine("EVENT_DETAIL").addChildLine("DATE").setTagLineValue("birth date");
+		
+		
+		
 		indi1.addChildLine("INDIVIDUAL_EVENT_STRUCTURE", "DEAT").addChildLine("DEAT").addChildLine("INDIVIDUAL_EVENT_DETAIL").addChildLine("EVENT_DETAIL").addChildLine("DATE").setTagLineValue("death date");
 		GedcomNode indi13 = indi1.addChildLine("SPOUSE_TO_FAMILY_LINK");
 		GedcomNode indi14 = indi1.addChildLine("CHANGE_DATE");
-				
+		
+		GedcomNode indi11 = indi1.addChildLine("SEX").setTagLineValue("M");
 		indi11.newLine();
 		
 		GedcomNode indi131 = indi13.addChildLine("FAMS");
@@ -107,16 +113,13 @@ public class GedcomStoreTest {
 		GedcomNode indi1411 = indi141.addChildLine("DATE");
 		indi1411.setTagLineValue("date");
 		
-		GedcomNode indi121 = indi12.addChildLine("BIRT");
-		indi121.setTagLineValue("Y");
-		indi121.addChildLine("INDIVIDUAL_EVENT_DETAIL").addChildLine("EVENT_DETAIL").addChildLine("DATE").setTagLineValue("birth date");
+
 		
-		indi13.newLine().addChildLine("FAMS").setTagLineXRef("famslink2");
 		
 		indi1.addChildLine("CHILD_TO_FAMILY_LINK").addChildLine("FAMC").setTagLineXRef("famclink");
 		
 		
-		
+		indi13.newLine().addChildLine("FAMS").setTagLineXRef("famslink2");
 		
 		System.out.println("Number of INDIVIDUAL_EVENT_STRUCTURE: " + indi1.getNumberOfChildLines("INDIVIDUAL_EVENT_STRUCTURE"));
 		System.out.println("Number of INDIVIDUAL_EVENT_STRUCTURE DEAT: " + indi1.getNumberOfChildLines("INDIVIDUAL_EVENT_STRUCTURE", "DEAT"));

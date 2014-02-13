@@ -256,11 +256,11 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 		
 		//Look for the position where to add the new line. The position is defined 
 		//through the parsed lineage linked grammar with the line order
-		for (int i = getNumberOfChildNodes() - 1; i >= 0 ; i--) {
-			if (newStoreLinePos >= getChildNode(i).getNodeValue().getStoreLine().getPos()) {
+		for (int i = 0; i < getNumberOfChildNodes(); i++) {
+			if (newStoreLinePos < getChildNode(i).getStoreLine().getPos()) {
 				//Add the new line right before the line with a higher store line position
 				try {
-					addChildNodeAt(i + 1, newNode);
+					addChildNodeAt(i, newNode);
 				} catch (TreeNodeException e) {
 					return null;
 				}
