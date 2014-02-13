@@ -17,7 +17,10 @@
 package ch.thn.gedcom.printer;
 
 import ch.thn.gedcom.data.GedcomLine;
-import ch.thn.util.tree.printable.printer.vertical.VerticalHTMLTreePrinter;
+import ch.thn.gedcom.data.GedcomNode;
+import ch.thn.util.tree.printable.printer.TextTreePrinterLines;
+import ch.thn.util.tree.printable.printer.TreePrinterNode;
+import ch.thn.util.tree.printable.printer.vertical.GenericVerticalHTMLTreePrinter;
 /**
  * This gedcom data printer prints the HTML code to view the gedcom structure 
  * as HTML file, for example in a web browser.
@@ -25,7 +28,7 @@ import ch.thn.util.tree.printable.printer.vertical.VerticalHTMLTreePrinter;
  * @author Thomas Naeff (github.com/thnaeff)
  *
  */
-public class GedcomStructureHTMLPrinter extends VerticalHTMLTreePrinter<String, GedcomLine> {
+public class GedcomStructureHTMLPrinter extends GenericVerticalHTMLTreePrinter<String, GedcomLine, GedcomNode> {
 
 	
 	/**
@@ -48,6 +51,33 @@ public class GedcomStructureHTMLPrinter extends VerticalHTMLTreePrinter<String, 
 			ADDITIONALLINEAFTEREND = null;
 		}
 				
+	}
+
+	@Override
+	protected TextTreePrinterLines getNodeData(GedcomNode node) {
+		TextTreePrinterLines lines = new TextTreePrinterLines();
+				
+		if (node.getNodeLine() != null) {
+			lines.addNewLine(node.toString());
+		}
+		
+		return lines;
+	}
+
+	@Override
+	protected void preProcessingNode(
+			TreePrinterNode<String, TextTreePrinterLines> printerNode,
+			int currentNodeLevel, int currentNodeIndex, int currentNodeCount,
+			boolean isHeadNode, boolean isFirstChildNode,
+			boolean isLastChildNode, boolean hasChildNodes) {
+	}
+
+	@Override
+	protected void postProcessingNode(
+			TreePrinterNode<String, TextTreePrinterLines> printerNode,
+			int currentNodeLevel, int currentNodeIndex, int currentNodeCount,
+			boolean isHeadNode, boolean isFirstChildNode,
+			boolean isLastChildNode, boolean hasChildNodes) {
 	}
 	
 }

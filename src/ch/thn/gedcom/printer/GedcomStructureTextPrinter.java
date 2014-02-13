@@ -20,12 +20,12 @@ import java.util.ArrayList;
 
 import ch.thn.gedcom.GedcomFormatter;
 import ch.thn.gedcom.data.GedcomLine;
-import ch.thn.util.tree.printable.PrintableTreeNode;
+import ch.thn.gedcom.data.GedcomNode;
+import ch.thn.util.tree.printable.TreePrinter;
 import ch.thn.util.tree.printable.printer.TextTreePrinterLines;
-import ch.thn.util.tree.printable.printer.TreePrinter;
 import ch.thn.util.tree.printable.printer.TreePrinterNode;
 import ch.thn.util.tree.printable.printer.TreePrinterTree;
-import ch.thn.util.tree.printable.printer.vertical.VerticalTextTreePrinter;
+import ch.thn.util.tree.printable.printer.vertical.GenericVerticalTextTreePrinter;
 
 /**
  * A printer which prints the gedcom structure in text format. The output 
@@ -35,7 +35,7 @@ import ch.thn.util.tree.printable.printer.vertical.VerticalTextTreePrinter;
  * @author Thomas Naeff (github.com/thnaeff)
  *
  */
-public class GedcomStructureTextPrinter extends VerticalTextTreePrinter<String, GedcomLine> {
+public class GedcomStructureTextPrinter extends GenericVerticalTextTreePrinter<String, GedcomLine, GedcomNode> {
 
 	private boolean flatStructure = true;
 	
@@ -72,13 +72,31 @@ public class GedcomStructureTextPrinter extends VerticalTextTreePrinter<String, 
 	
 
 	@Override
-	protected TextTreePrinterLines getNodeData(PrintableTreeNode<String, GedcomLine> node) {
+	protected TextTreePrinterLines getNodeData(GedcomNode node) {
 		TextTreePrinterLines lines = new TextTreePrinterLines();
 		
-		int lineIndex = lines.addNewLine();
-		lines.addValue(lineIndex, node.toString());
+		if (node.getNodeLine() != null) {
+			lines.addNewLine(node.toString());
+		}
 		
 		return lines;
+	}
+	
+	@Override
+	protected void preProcessingNode(
+			TreePrinterNode<String, TextTreePrinterLines> printerNode,
+			int currentNodeLevel, int currentNodeIndex, int currentNodeCount,
+			boolean isHeadNode, boolean isFirstChildNode,
+			boolean isLastChildNode, boolean hasChildNodes) {
+	}
+
+
+	@Override
+	protected void postProcessingNode(
+			TreePrinterNode<String, TextTreePrinterLines> printerNode,
+			int currentNodeLevel, int currentNodeIndex, int currentNodeCount,
+			boolean isHeadNode, boolean isFirstChildNode,
+			boolean isLastChildNode, boolean hasChildNodes) {
 	}
 	
 	@Override
@@ -132,4 +150,7 @@ public class GedcomStructureTextPrinter extends VerticalTextTreePrinter<String, 
 		return sb;
 		
 	}
+	
+	
+	
 }

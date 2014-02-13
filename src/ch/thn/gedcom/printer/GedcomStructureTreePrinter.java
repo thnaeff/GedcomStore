@@ -17,7 +17,10 @@
 package ch.thn.gedcom.printer;
 
 import ch.thn.gedcom.data.GedcomLine;
-import ch.thn.util.tree.printable.printer.vertical.VerticalDebugTextTreePrinter;
+import ch.thn.gedcom.data.GedcomNode;
+import ch.thn.util.tree.printable.printer.TextTreePrinterLines;
+import ch.thn.util.tree.printable.printer.TreePrinterNode;
+import ch.thn.util.tree.printable.printer.vertical.GenericVerticalDebugTextTreePrinter;
 
 /**
  * Simply extends {@link DebugVerticalTreePrinter} and is very useful for debugging 
@@ -27,7 +30,7 @@ import ch.thn.util.tree.printable.printer.vertical.VerticalDebugTextTreePrinter;
  * 
  * @see DebugVerticalTreePrinter
  */
-public class GedcomStructureTreePrinter extends VerticalDebugTextTreePrinter<String, GedcomLine> {
+public class GedcomStructureTreePrinter extends GenericVerticalDebugTextTreePrinter<String, GedcomLine, GedcomNode> {
 
 	/**
 	 * 
@@ -36,6 +39,33 @@ public class GedcomStructureTreePrinter extends VerticalDebugTextTreePrinter<Str
 	 */
 	public GedcomStructureTreePrinter(boolean showAllNodes) {
 		super(!showAllNodes, !showAllNodes, false, false);
+	}
+
+	@Override
+	protected TextTreePrinterLines getNodeData(GedcomNode node) {
+		TextTreePrinterLines lines = new TextTreePrinterLines();
+		
+		if (node.getNodeLine() != null) {
+			lines.addNewLine(node.toString());
+		}
+		
+		return lines;
+	}
+
+	@Override
+	protected void preProcessingNode(
+			TreePrinterNode<String, TextTreePrinterLines> printerNode,
+			int currentNodeLevel, int currentNodeIndex, int currentNodeCount,
+			boolean isHeadNode, boolean isFirstChildNode,
+			boolean isLastChildNode, boolean hasChildNodes) {
+	}
+
+	@Override
+	protected void postProcessingNode(
+			TreePrinterNode<String, TextTreePrinterLines> printerNode,
+			int currentNodeLevel, int currentNodeIndex, int currentNodeCount,
+			boolean isHeadNode, boolean isFirstChildNode,
+			boolean isLastChildNode, boolean hasChildNodes) {
 	}
 	
 	

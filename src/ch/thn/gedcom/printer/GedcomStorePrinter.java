@@ -21,12 +21,12 @@ import ch.thn.gedcom.store.GedcomStore;
 import ch.thn.gedcom.store.GedcomStoreBlock;
 import ch.thn.gedcom.store.GedcomStoreLine;
 import ch.thn.gedcom.store.GedcomStoreStructure;
-import ch.thn.util.tree.AbstractTreeNode;
+import ch.thn.util.tree.GenericTreeNode;
 
 
 /**
  * This printer only exists since the {@link GedcomStore} and its block/line 
- * structure has not been changed to a {@link AbstractTreeNode} construct yet.
+ * structure has not been changed to a {@link GenericTreeNode} construct yet.
  * 
  * @author Thomas Naeff (github.com/thnaeff)
  *
