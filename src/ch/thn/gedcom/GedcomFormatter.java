@@ -297,9 +297,6 @@ public class GedcomFormatter {
 			String replaceNullWith, boolean addBrackets) {
 		StringBuilder sb = new StringBuilder();
 		
-		if (addBrackets && list.size() > 1) {
-			sb.append("[");
-		}
 		
 		for (String item : list) {
 			if (item == null) {
@@ -310,7 +307,7 @@ public class GedcomFormatter {
 				continue;
 			}
 			
-			if (sb.length() > 1 && separator != null) {
+			if (sb.length() > 0 && separator != null) {
 				sb.append(separator);
 			}
 			
@@ -327,6 +324,10 @@ public class GedcomFormatter {
 			} else if (itemSuffix != null) {
 				sb.append(itemSuffix);
 			}
+		}
+		
+		if (addBrackets && list.size() > 1) {
+			sb.insert(0, "[");
 		}
 		
 		if (addBrackets && list.size() > 1) {
