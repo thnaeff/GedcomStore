@@ -942,9 +942,15 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 
 		if (line.isTagLine()) {
 			GedcomTagLine tagLine = line.getAsTagLine();
+			
+			//Never skip lines which do not have a value or xref field
+			if (!tagLine.requiresValue() && !tagLine.requiresXRef()) {
+				return false;
+			}
 
 			if (!printEmptyLines) {
 				//Skip empty lines which actually require a value
+				//An empty value has been set
 				if ((tagLine.isValueSet() || tagLine.isXRefSet()) && tagLine.isEmpty()) {
 					skip = true;
 				}
