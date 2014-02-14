@@ -17,6 +17,7 @@
 package ch.thn.gedcom.data;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -171,6 +172,32 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 		super.forcePrint(forcePrint);
 	}
 	
+	@Override
+	public boolean isHeadNode() {
+		return super.isHeadNode();
+	}
+	
+	@Override
+	public GedcomNode getPreviousNode() {
+		return super.getPreviousNode();
+	}
+	
+	@Override
+	public GedcomNode getNextNode() {
+		return super.getNextNode();
+	}
+	
+	@Override
+	public boolean hasPreviousNode() {
+		return super.hasPreviousNode();
+	}
+	
+	@Override
+	public boolean hasNextNode() {
+		return super.hasNextNode();
+	}
+	
+	
 	/**
 	 * 
 	 * 
@@ -256,7 +283,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 		
 		//Look for the position where to add the new line. The position is defined 
 		//through the parsed lineage linked grammar with the line order
-		for (int i = 0; i < getNumberOfChildNodes(); i++) {
+		for (int i = 0; i < getChildNodeCount(); i++) {
 			if (newStoreLinePos < getChildNode(i).getStoreLine().getPos()) {
 				//Add the new line right before the line with a higher store line position
 				try {
@@ -461,6 +488,58 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	}
 	
 	/**
+	 * 
+	 * 
+	 */
+	public void removeAllChildLines() {
+		super.removeAllChildNodes();
+	}
+	
+	/**
+	 * 
+	 * 
+	 * @return
+	 */
+	public boolean removeLine() {
+		return super.removeNode();
+	}
+	
+	/**
+	 * Sorts all the child nodes using the given comparator
+	 * 
+	 * @param childValueSorter
+	 */
+	public void sortChildLines(Comparator<GedcomNode> childValueSorter) {
+		super.sortChildNodesByValue(childValueSorter);
+	}
+	
+	/**
+	 * 
+	 * 
+	 */
+	public GedcomNode replaceNode(GedcomNode replacementNode) {
+		return super.replaceNode(replacementNode);
+	}
+	
+	/**
+	 * 
+	 * 
+	 * @return
+	 */
+	public boolean hasChildLines() {
+		return super.hasChildNodes();
+	}
+	
+	/**
+	 * 
+	 * 
+	 * @return
+	 */
+	public int getNumberOfChildLines() {
+		return super.getChildNodeCount();
+	}
+	
+	/**
 	 * Returns the number of lines which have the given tag or structure name. 
 	 * If there are different structure variations for one name, they are all 
 	 * counted together.
@@ -469,7 +548,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	 * @return
 	 */
 	public int getNumberOfChildLines(String tagOrStructureName) {
-		return getNumberOfChildNodes(tagOrStructureName);
+		return getChildNodeCount(tagOrStructureName);
 	}
 	
 	/**
@@ -709,7 +788,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 			return false;
 		}
 		
-		int lineCount = getNumberOfChildNodes(tagOrStructureName);
+		int lineCount = getChildNodeCount(tagOrStructureName);
 		int max = maxNumberOfLines(tagOrStructureName);
 		
 		return (max != 0 && lineCount >= max);
