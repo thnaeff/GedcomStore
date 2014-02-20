@@ -40,11 +40,11 @@ public class GedcomStructureTextPrinter extends GenericVerticalTextTreePrinter<S
 	private boolean flatStructure = true;
 	
 	/**
-	 * 
+	 * Prints the gedcom structure
 	 * 
 	 */
 	public GedcomStructureTextPrinter() {
-		this(false);
+		this(true);
 	}
 	
 	
