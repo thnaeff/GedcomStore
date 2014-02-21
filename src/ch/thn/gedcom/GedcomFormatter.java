@@ -22,6 +22,9 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.regex.Pattern;
+
+import ch.thn.util.StringUtil;
 
 /**
  * This class contains some static methods which help with formatting data to be used 
@@ -34,10 +37,18 @@ public class GedcomFormatter {
 	
 	public static final String INSET = "  ";
 	
-	private static final SimpleDateFormat gedcomDateAll = new SimpleDateFormat("dd MMM yyyy");
+	public static enum GedcomDateFormat {
+		YEAR, YEAR_MONTH, YEAR_MONTH_DAY, UNKNOWN
+	}
+	
+	private static final Pattern gedcomDateFormatYear = Pattern.compile("[0-9]{4}");
+	private static final Pattern gedcomDateFormatYearMonth = Pattern.compile("[A-Z]{3} [0-9]{4}");
+	private static final Pattern gedcomDateFormatYearMonthDay = Pattern.compile("[0-3]{0,1}[0-9]{1} [A-Z]{3} [0-9]{4}");
+	
+	private static final SimpleDateFormat gedcomDateYearMonthDay = new SimpleDateFormat("dd MMM yyyy");
 	private static final SimpleDateFormat gedcomDateYearMonth = new SimpleDateFormat("MMM yyyy");
 	private static final SimpleDateFormat gedcomDateYear = new SimpleDateFormat("yyyy");
-	private static final SimpleDateFormat gedcomDateTimeAll = new SimpleDateFormat("dd MMM yyyy HH:mm:ss");
+	private static final SimpleDateFormat gedcomDateTimeYearMonthDay = new SimpleDateFormat("dd MMM yyyy HH:mm:ss");
 	private static final SimpleDateFormat gedcomDateTimeYearMonth = new SimpleDateFormat("MMM yyyy HH:mm:ss");
 	private static final SimpleDateFormat gedcomDateTimeYear = new SimpleDateFormat("yyyy HH:mm:ss");
 	private static final SimpleDateFormat gedcomTime = new SimpleDateFormat("HH:mm:ss");
@@ -45,10 +56,10 @@ public class GedcomFormatter {
 	private static final Calendar calendar = new GregorianCalendar();
 	
 	static {
-		gedcomDateAll.setCalendar(calendar);
+		gedcomDateYearMonthDay.setCalendar(calendar);
 		gedcomDateYearMonth.setCalendar(calendar);
 		gedcomDateYear.setCalendar(calendar);
-		gedcomDateTimeAll.setCalendar(calendar);
+		gedcomDateTimeYearMonthDay.setCalendar(calendar);
 		gedcomDateTimeYearMonth.setCalendar(calendar);
 		gedcomDateTimeYear.setCalendar(calendar);
 		gedcomTime.setCalendar(calendar);
@@ -62,7 +73,7 @@ public class GedcomFormatter {
 	 */
 	public static String getGedcomDateNow() {
 		calendar.setTime(new Date());
-		return gedcomDateAll.format(calendar.getTime()).toUpperCase();
+		return gedcomDateYearMonthDay.format(calendar.getTime()).toUpperCase();
 	}
 	
 	/**
@@ -73,6 +84,17 @@ public class GedcomFormatter {
 	public static String getGedcomTimeNow() {
 		calendar.setTime(new Date());
 		return gedcomTime.format(calendar.getTime()).toUpperCase();
+	}
+	
+	/**
+	 * Returns the time part of the given date in the format needed for gedcom files.
+	 * 
+	 * @param d
+	 * @return
+	 */
+	public static String getGedcomTime(Date d) {
+		calendar.setTime(d);
+		return gedcomTime.format(calendar.getTime());
 	}
 	
 	/**
@@ -98,11 +120,10 @@ public class GedcomFormatter {
 				return gedcomDateYearMonth.format(calendar.getTime()).toUpperCase();
 			} else {
 				//Year, month and day. With uppercase month
-				return gedcomDateAll.format(calendar.getTime()).toUpperCase();
+				return gedcomDateYearMonthDay.format(calendar.getTime()).toUpperCase();
 			}
 		} else {
 			//Year only
-			//Year, month and day
 			return gedcomDateYear.format(calendar.getTime());
 		}
 	}
@@ -130,80 +151,18 @@ public class GedcomFormatter {
 				return gedcomDateTimeYearMonth.format(calendar.getTime()).toUpperCase();
 			} else {
 				//Year, month and day. With uppercase month
-				return gedcomDateTimeAll.format(calendar.getTime()).toUpperCase();
+				return gedcomDateTimeYearMonthDay.format(calendar.getTime()).toUpperCase();
 			}
 		} else {
 			//Year only
-			//Year, month and day
 			return gedcomDateTimeYear.format(calendar.getTime());
 		}
 	}
 	
-	/**
-	 * Returns the given time in the format needed for gedcom files.
-	 * 
-	 * @param d
-	 * @return The time as string, or <code>null</code> if <code>d=null</code>
-	 */
-	public static String getGedcomTime(Date d) {
-		if (d == null) {
-			return null;
-		}
-		
-		calendar.setTime(d);
-		return gedcomTime.format(calendar.getTime()).toUpperCase();
-	}
-	
-		
-	/**
-	 * Converts the given date string to a date string needed for GEDCOM files. 
-	 * The date patterns given with dateFormatPatterns are used in the given order 
-	 * to parse the date string.
-	 * 
-	 * @param dateString
-	 * @param month Include the month?
-	 * @param day Include the day (only possible if the month is included)?
-	 * @param dateFormatPatterns
-	 * @return
-	 */
-	public static String getGedcomDate(String dateString, boolean month, boolean day, 
-			String... dateFormatPatterns) {
-		return getGedcomDate(extractDate(dateString, dateFormatPatterns), month, day);
-	}
 	
 	/**
-	 * Converts the given time string to a time string needed for GEDCOM files. 
-	 * The date patterns given with dateFormatPatterns are used in the given order 
-	 * to parse the time string.
-	 * 
-	 * @param timeString
-	 * @param dateFormatPatterns
-	 * @return
-	 */
-	public static String getGedcomTime(String timeString, String... dateFormatPatterns) {
-		return getGedcomTime(extractDate(timeString, dateFormatPatterns));
-	}
-	
-	/**
-	 * Converts the given date and time string to a date and time string needed for GEDCOM files. 
-	 * The date-time patterns given with dateTimeFormatPatterns are used in the given order 
-	 * to parse the date-time string.
-	 * 
-	 * @param dateTimeString
-	 * @param month Include the month?
-	 * @param day Include the day (only possible if the month is included)?
-	 * @param dateTimeFormatPatterns
-	 * @return
-	 */
-	public static String getGedcomDateTime(String dateTimeString, boolean month, boolean day, 
-			String... dateTimeFormatPatterns) {
-		return getGedcomDateTime(extractDate(dateTimeString, dateTimeFormatPatterns), month, day);
-	}
-	
-	/**
-	 * Returns the Date object from the given gedcom dateString. Since gedcom dates could 
-	 * be given with only the year or year and month, it tries the 
-	 * following patterns in the given order:<br>
+	 * Returns the Date object from the given gedcom dateString. Gedcom dates 
+	 * can be in the following three patterns:<br>
 	 * 1. "dd MMM yyyy"<br>
 	 * 2. "MMM yyyy"<br>
 	 * 3. "yyyy"
@@ -212,55 +171,160 @@ public class GedcomFormatter {
 	 * input date string "FEB 1995" would produce a date object "01 02 1995". This 
 	 * is just how {@link Date} works.
 	 * 
-	 * @param dateString
+	 * @param gedcomDateString
 	 * @return
 	 */
-	public static Date getDateFromGedcom(String dateString) {
-		if (dateString == null) {
+	public static Date getDateFromGedcom(String gedcomDateString) {
+		if (gedcomDateString == null || gedcomDateString.length() == 0) {
 			return null;
 		}
 		
-		return extractDate(dateString, "dd MMM yyyy", "MMM yyyy", "yyyy");
+		GedcomDateFormat format = getGedcomDateFormat(gedcomDateString);
 		
+		try {
+			switch (format) {
+			case YEAR_MONTH_DAY:
+				return gedcomDateYearMonthDay.parse(gedcomDateString);
+			case YEAR_MONTH:
+				return gedcomDateYearMonth.parse(gedcomDateString);
+			case YEAR:
+				return gedcomDateYear.parse(gedcomDateString);
+			default:
+				break;
+			}
+		} catch (ParseException e) {}
+		
+		return null;
 	}
 	
 	/**
-	 * Converts the given gedcom time (HH:mm:ss) string to a date object
+	 * Converts the given gedcom time (HH:mm:ss) string to a date object.
 	 * 
-	 * @param timeString
+	 * @param gedcomTimeString
 	 * @return
 	 */
-	public static Date getTimeFromGedcom(String timeString) {
-		if (timeString == null) {
+	public static Date getTimeFromGedcom(String gedcomTimeString) {
+		if (gedcomTimeString == null || gedcomTimeString.length() == 0) {
 			return null;
 		}
 		
 		try {
-			return gedcomTime.parse(timeString);
+			return gedcomTime.parse(gedcomTimeString);
 		} catch (ParseException e) {
 			return null;
 		}
-		
 	}
 	
 	/**
-	 * Returns the Date object from the given dateTimeString. Since gedcom dates could 
-	 * be given with only the year or year and month, it tries the 
-	 * following patterns in the given order for the date part:<br>
+	 * Returns the Date object from the given dateTimeString. It is expected 
+	 * that the given string contains the date and the time part. Gedcom dates 
+	 * can be in the following three patterns:<br>
 	 * 1. "dd MMM yyyy"<br>
 	 * 2. "MMM yyyy"<br>
-	 * 3. "yyyy"<br>
+	 * 3. "yyyy"
+	 * <br>
 	 * The time part is parsed with the format "HH:mm:ss"<br>
 	 * <br>
 	 * Note: The missing pieces are set to 01 (first day and first month). Thus, the 
 	 * input date string "1995 12:02:20" would produce a date object "01 01 1995 12:02:20". This 
 	 * is just how {@link Date} works.
 	 * 
-	 * @param dateString
+	 * @param gedcomDateTimeString
 	 * @return
 	 */
-	public static Date getDateTimeFromGedcom(String dateTimeString) {
-		return extractDate(dateTimeString, "dd MMM yyyy HH:mm:ss", "MMM yyyy HH:mm:ss", "yyyy HH:mm:ss");
+	public static Date getDateTimeFromGedcom(String gedcomDateTimeString) {
+		if (gedcomDateTimeString == null || gedcomDateTimeString.length() == 0) {
+			return null;
+		}
+				
+		//Only analyze the date part
+		GedcomDateFormat format = getGedcomDateFormat(gedcomDateTimeString.substring(0, gedcomDateTimeString.lastIndexOf(" ")));
+		
+		try {
+			switch (format) {
+			case YEAR_MONTH_DAY:
+				return gedcomDateTimeYearMonthDay.parse(gedcomDateTimeString);
+			case YEAR_MONTH:
+				return gedcomDateTimeYearMonth.parse(gedcomDateTimeString);
+			case YEAR:
+				return gedcomDateTimeYear.parse(gedcomDateTimeString);
+			default:
+				break;
+			}
+		} catch (ParseException e) {}
+		
+		return null;
+	}
+	
+	/**
+	 * Checks if the given date string is in a valid gedcom date format
+	 * 
+	 * @param gedcomDate
+	 * @return
+	 */
+	public static boolean isGedcomDate(String gedcomDate) {
+		return (getGedcomDateFormat(gedcomDate) != GedcomDateFormat.UNKNOWN);
+	}
+	
+	/**
+	 * Analyzes the format of the given date string and returns if the date contains only 
+	 * the year, the year and month or year, month and day in gedcom format.
+	 * 
+	 * @param gedcomDate
+	 * @return
+	 */
+	public static GedcomDateFormat getGedcomDateFormat(String gedcomDate) {
+		
+		//The gedcom date could either be in the format "dd MMM yyyy", "MMM yyyy" 
+		//or "yyyy"
+		
+		if (StringUtil.matches(gedcomDateFormatYearMonthDay, gedcomDate)) {
+			return GedcomDateFormat.YEAR_MONTH_DAY;
+		} else if (StringUtil.matches(gedcomDateFormatYearMonth, gedcomDate)) {
+			return GedcomDateFormat.YEAR_MONTH;
+		} else if (StringUtil.matches(gedcomDateFormatYear, gedcomDate)) {
+			return GedcomDateFormat.YEAR;
+		}
+		
+		return GedcomDateFormat.UNKNOWN;
+	}
+	
+	/**
+	 * Converts the given gedcom date into a date string with one of the given formats. Since the 
+	 * gedcom date format can occur in three ways (with "day month year", "month year" 
+	 * or "year"), three possibilities of output formats have to be given.
+	 * 
+	 * @param gedcomDate
+	 * @param dateFormatYear
+	 * @param dateFormatYearMonth
+	 * @param dateFormatYearMonthDay
+	 * @return
+	 */
+	public static String convertGedcomDate(String gedcomDate, 
+			String dateFormatYear, String dateFormatYearMonth, String dateFormatYearMonthDay) {
+		
+		GedcomDateFormat format = getGedcomDateFormat(gedcomDate);
+		
+		try {
+			switch (format) {
+			case YEAR_MONTH_DAY:
+				Date date1 = gedcomDateYearMonthDay.parse(gedcomDate);
+				SimpleDateFormat df1 = new SimpleDateFormat(dateFormatYearMonthDay);
+				return df1.format(date1);
+			case YEAR_MONTH:
+				Date date2 = gedcomDateYearMonth.parse(gedcomDate);
+				SimpleDateFormat df2 = new SimpleDateFormat(dateFormatYearMonth);
+				return df2.format(date2);
+			case YEAR:
+				Date date3 = gedcomDateYear.parse(gedcomDate);
+				SimpleDateFormat df3 = new SimpleDateFormat(dateFormatYear);
+				return df3.format(date3);
+			default:
+				break;
+			}
+		} catch (ParseException e) {}
+		
+		return null;
 	}
 	
 	/**
