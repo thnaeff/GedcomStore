@@ -1217,7 +1217,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 		
 		for (; pathIndex < path.length; pathIndex++) {
 			PathStepPieces pp = new PathStepPieces();
-			if (!pp.parse(path[pathIndex])) {
+			if (path[pathIndex] == null || path[pathIndex].length() == 0 || !pp.parse(path[pathIndex])) {
 				//Nothing to do
 				continue;
 			}
