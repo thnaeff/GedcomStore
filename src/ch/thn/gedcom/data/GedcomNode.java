@@ -496,7 +496,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	}
 	
 	/**
-	 * Removes this child line from the structure
+	 * Removes this line from the structure
 	 * 
 	 * @return
 	 */
@@ -1374,25 +1374,41 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 			
 			tagOrStructureName = pathPieceParts[0];
 			
+			//There is more than just a structure name or tag
 			if (pathPieceParts.length > 1) {
 				try {
 					lineNumber = Integer.parseInt(pathPieceParts[1]);
+					//No variation
+					return true;
 				} catch (NumberFormatException e) {
-					//If it is not a line number, it must be a tag
+					//If it is not a line number, it must be a tag for the 
+					//variation
 					tag = pathPieceParts[1];
 				}
 				
-				//Only continue if there was a tag
-				if (tag != null && pathPieceParts.length > 2) {
+				//Continues if there is more than just the structure name and 
+				//variation tag
+				if (pathPieceParts.length > 2) {
 					lookForXRefAndValueVariation = true;
-					withXRef = Boolean.parseBoolean(pathPieceParts[2]);
 					
-					if (pathPieceParts.length > 3) {
-						withValue = Boolean.parseBoolean(pathPieceParts[3]);
+					int lineNumberIncrease = 0;
+					try {
+						lineNumber = Integer.parseInt(pathPieceParts[2]);
+						lineNumberIncrease = 1;
+					} catch (NumberFormatException e) {
+						
 					}
 					
-					if (pathPieceParts.length > 4) {
-						lineNumber = Integer.parseInt(pathPieceParts[4]);
+					if (pathPieceParts.length > 2 + lineNumberIncrease) {
+						withXRef = Boolean.parseBoolean(pathPieceParts[2 + lineNumberIncrease]);
+					}
+					
+					if (pathPieceParts.length > 3 + lineNumberIncrease) {
+						withValue = Boolean.parseBoolean(pathPieceParts[3 + lineNumberIncrease]);
+					}
+					
+					if (pathPieceParts.length > 4 + lineNumberIncrease) {
+						lineNumber = Integer.parseInt(pathPieceParts[4 + lineNumberIncrease]);
 					}
 				}
 			}
@@ -1400,6 +1416,10 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 			return true;
 		}
 		
+		@Override
+		public String toString() {
+			return tagOrStructureName + ", " + tag + ", " + lookForXRefAndValueVariation + ", " + withXRef + ", " + withValue + ", " + lineNumber;
+		}
 		
 	}
 	
