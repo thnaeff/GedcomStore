@@ -81,7 +81,7 @@ public class GedcomHelper {
 	/**  */
 	public static final Pattern leadingTrailingPatternWhole = Pattern.compile("^[ \t\r\n]+|[ \t\r\n]+$");
 	/**  */
-	public static final Pattern structureNamePattern = Pattern.compile("[A-Z_]+:=");
+	public static final Pattern structureNamePattern = Pattern.compile("[A-Z_]+[ ]?:[ ]?=");
 	/**  */
 	public static final Pattern idPattern = Pattern.compile("[A-Z]+([_:]*[A-Z])+");
 	/**  */

@@ -213,8 +213,8 @@ public class GedcomStore {
 				//Remove any excessive spaces
 				line = StringUtil.replaceAll(GedcomHelper.spacesPattern, line, " ");
 				
-				//Skip empty lines
-				if (line.length() == 0) {
+				//Skip empty lines and comment lines
+				if (line.length() == 0 || line.startsWith("/*")) {
 					continue;
 				}
 				
@@ -419,7 +419,8 @@ public class GedcomStore {
 		}
 		
 		//structure name lines
-		if (gedcomLine.endsWith(":=")) {
+		//one space is allowed
+		if (gedcomLine.endsWith(":=") || gedcomLine.endsWith(": =")) {
 			if (!StringUtil.matches(GedcomHelper.structureNamePattern, gedcomLine)) {
 				throw new GedcomParseException("The structure name line '" + gedcomLine + "' is invalid. " +
 						"A structure name line can only contain characters like 'A-Z', '_' and has to end with ':='.");
