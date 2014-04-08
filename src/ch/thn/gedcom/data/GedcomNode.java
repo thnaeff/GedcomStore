@@ -1150,6 +1150,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	 * - "tag or structure name"<br>
 	 * - "tag or structure name;line number"<br>
 	 * - "structure name;tag"<br>
+	 * - "structure name;tag;line number"<br>
 	 * - "structure name;tag;with xref;with value;line number"<br>
 	 * - "structure name;tag;with xref;with value"<br>
 	 * ("with xref" and "with value" have to be given as "true" or "false")<br>
