@@ -113,7 +113,10 @@ public class GedcomStoreTest {
 		GedcomNode indi1411 = indi141.addChildLine("DATE");
 		indi1411.setTagLineValue("date");
 		
-
+//		indi1.removePath("SEX");
+//		indi141.removePathEnd("DATE");
+//		indi1411.branchCleanup();
+		indi1411.removeLine(true);
 		
 		
 		indi1.addChildLine("CHILD_TO_FAMILY_LINK").addChildLine("FAMC").setTagLineXRef("famclink");

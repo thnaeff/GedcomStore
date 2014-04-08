@@ -505,6 +505,25 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	}
 	
 	/**
+	 * Removes this line from the structure.
+	 * 
+	 * @param branchCleanup If set to <code>true</code>, {@link #branchCleanup()} is 
+	 * automatically executed on the parent line to remove all empty and unused 
+	 * parent lines.
+	 * @return
+	 */
+	public boolean removeLine(boolean branchCleanup) {
+		GedcomNode parent = getParentLine();
+		boolean ret = super.removeNode();
+		
+		if (branchCleanup) {
+			parent.branchCleanup();
+		}
+		
+		return ret;
+	}
+	
+	/**
 	 * Sorts all the child nodes using the given comparator
 	 * 
 	 * @param childValueSorter
@@ -1281,6 +1300,124 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 		return currentNode;
 	}
 	
+	/**
+	 * Removes the very end node of the given path only.
+	 * 
+	 * @param path
+	 * @return
+	 */
+	public GedcomNode removePathEnd(String... path) {
+		return removePath(false, path);
+	}
+	
+	/**
+	 * Removes the very end node of the given path and does a branch cleanup (removes 
+	 * all unused parent branch parts). The cleanup travels the tree branch upwards 
+	 * and removes all empty branch parts until a node with children or a tag line 
+	 * node with value/xref is found.
+	 * 
+	 * @param path
+	 * @return
+	 */
+	public GedcomNode removePath(String... path) {
+		return removePath(true, path);
+	}
+	
+	/**
+	 * Removes the node which is at the very end of the given path.
+	 * 
+	 * @param branchCleanup If set to <code>true</code>, after removing the path 
+	 * end node it travels the tree branch upwards and removes all empty branch 
+	 * parts until a node with children or a tag line node with value/xref is found.
+	 * @param path The path to remove the end of
+	 * @return The node which has been removed. If any empty parents are removed, 
+	 * it returns the top most removed parent.
+	 */
+	private GedcomNode removePath(boolean branchCleanup, String... path) {
+		
+		GedcomNode node = followPath(path);
+		
+		if (node == null) {
+			return null;
+		}
+		
+		if (!branchCleanup) {
+			//Remove the very end node only
+			if (!node.removeLine()) {
+				return null;
+			}
+			
+			return node;
+		} else {
+			//Get the parent node before removing the node because removing a 
+			//node clears its parent node
+			GedcomNode parentNode = node.getParentLine();
+			
+			//Remove the very end node
+			if (!node.removeLine()) {
+				return null;
+			}
+			
+			return branchCleanup(parentNode);
+		}
+		
+	}
+	
+	/**
+	 * This only works on a end node of a branch. <code>null</code> is returned 
+	 * if the given node has child nodes.
+	 * It travels upwards and removes all empty branch parts until a node with 
+	 * children or a tag line node with value/xref is found.
+	 * 
+	 * @param node The node from which the cleanup should start
+	 * @return If any empty parents are removed, it returns the top most removed parent.
+	 */
+	private GedcomNode branchCleanup(GedcomNode node) {
+		if (node.getNumberOfChildLines() > 1) {
+			return null;
+		}
+		
+		GedcomNode parentNode = node;
+		boolean firstCheck = true;
+		
+		while (parentNode != null) {
+			
+			if (parentNode.getNumberOfChildLines() > 1 
+					|| (parentNode.getNodeValue().isTagLine() 
+							&& (parentNode.getNodeValue().getAsTagLine().requiresValue() 
+									|| parentNode.getNodeValue().getAsTagLine().requiresXRef()))) {
+				//Node with children or a tag line node found -> do not continue
+				
+				if (firstCheck) {
+					return null;
+				}
+				
+				break;
+			}
+			
+			firstCheck = false;
+			node = parentNode;
+			parentNode = parentNode.getParentLine();
+		}
+		
+		if (!node.removeLine()) {
+			return null;
+		}
+		
+		return node;
+	}
+	
+	/**
+	 * This only works on a end node of a branch. <code>null</code> is returned 
+	 * if the node on which it is executed has child nodes.
+	 * It travels upwards and removes all empty branch parts until a node with 
+	 * children or a tag line node with value/xref is found.
+	 * 
+	 * @return If any empty parents are removed, it returns the top most removed parent.
+	 */
+	public GedcomNode branchCleanup() {
+		return branchCleanup(this);
+	}
 	
 	/**
 	 * 
