@@ -488,7 +488,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	}
 	
 	/**
-	 * 
+	 * Removes all the child lines from the structure of this line
 	 * 
 	 */
 	public void removeAllChildLines() {
@@ -496,7 +496,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	}
 	
 	/**
-	 * 
+	 * Removes this child line from the structure
 	 * 
 	 * @return
 	 */
@@ -514,7 +514,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	}
 	
 	/**
-	 * 
+	 * Replaces this structure node with the give node
 	 * 
 	 */
 	public GedcomNode replaceNode(GedcomNode replacementNode) {
@@ -522,7 +522,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	}
 	
 	/**
-	 * 
+	 * Returns true if this line has child lines
 	 * 
 	 * @return
 	 */
@@ -531,7 +531,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	}
 	
 	/**
-	 * 
+	 * Returns the number of child lines of this line
 	 * 
 	 * @return
 	 */
@@ -599,7 +599,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	}
 	
 	/**
-	 * 
+	 * Checks if a child line with the given tag or structure name exists
 	 * 
 	 * @param tagOrStructureName
 	 * @return
@@ -609,7 +609,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	}
 	
 	/**
-	 * 
+	 * Checks if a child line with the given structure name and tag variation exists
 	 * 
 	 * @param structureName
 	 * @param tag
@@ -620,7 +620,8 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	}
 	
 	/**
-	 * 
+	 * Checks if a child line with the given structure name and tag/xref/value 
+	 * variation exists
 	 * 
 	 * @param structureName
 	 * @param tag
@@ -634,7 +635,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	}
 
 	/**
-	 * 
+	 * Returns the key (tag or structure name) of the parent node
 	 * 
 	 * @return
 	 */
@@ -695,7 +696,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	}
 
 	/**
-	 * 
+	 * Checks if there is a child line with the given value
 	 *
 	 * @param tagName
 	 * @param value
@@ -717,7 +718,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	}
 
 	/**
-	 * 
+	 * Checks if there is a child line with the given xref
 	 * 
 	 * @param tagName
 	 * @param xref
@@ -795,7 +796,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	}
 
 	/**
-	 * 
+	 * Returns the store block of which this node is derived from
 	 * 
 	 * @return
 	 */
@@ -804,7 +805,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	}
 	
 	/**
-	 * 
+	 * Returns the store line of which this line is derived from
 	 * 
 	 * @return
 	 */
@@ -1281,6 +1282,8 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	
 	
 	/**
+	 * 
+	 * 
 	 * @return tagOrStructureName
 	 */
 	protected String getTagOrStructureName() {
@@ -1288,6 +1291,8 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	}
 	
 	/**
+	 * 
+	 * 
 	 * @return tag
 	 */
 	protected String getTag() {
@@ -1295,6 +1300,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	}
 	
 	/**
+	 * 
 	 * 
 	 * @return lookForXRefAndValueVariation
 	 */
@@ -1338,7 +1344,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	
 	
 	/**************************************************************************
-	 * 
+	 * A class to parse one piece of the gedcom path and split it in its pieces
 	 * 
 	 *
 	 * @author Thomas Naeff (github.com/thnaeff)
