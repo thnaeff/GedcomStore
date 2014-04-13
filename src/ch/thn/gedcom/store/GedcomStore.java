@@ -17,9 +17,11 @@
 package ch.thn.gedcom.store;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -185,22 +187,48 @@ public class GedcomStore {
 	 * @param grammarFile
 	 * @throws GedcomParseException
 	 */
-	public void parse(String grammarFile) throws GedcomParseException {
-		
-		System.out.println("Adding objects from: " + grammarFile + "\n");
-		
+	public void parse(String grammarFile) throws GedcomParseException {		
 		if (!grammarFile.endsWith("." + GEDCOM_FILENAME_EXTENSION)) {
 			throw new GedcomParseException("Invalid GEDCOM grammar file. Only *." + 
 						GEDCOM_FILENAME_EXTENSION + " Files supported");
 		}
 		
-		BufferedReader br = null;
+		FileInputStream finput = null;
+		
+		try {
+			finput = new FileInputStream(grammarFile);
+			parse(finput);
+		} catch (FileNotFoundException e) {
+			throw new GedcomParseException("File " + grammarFile + " not found!");
+		} finally {
+			if (finput != null) {
+				try {
+					finput.close();
+				} catch (IOException e) {
+					throw new GedcomParseException("Failed to close file reader for " + grammarFile);
+				}
+			}
+		}
+		
+	}
+	
+	/**
+	 * Parses the given lineage-linked grammar file and adds all the structures 
+	 * to this store. Reads the definitions from the given {@link InputStream}. 
+	 * Make sure you load the correct file (ending with *.gedg).
+	 * 
+	 * @param grammarFile
+	 * @throws GedcomParseException
+	 */
+	public void parse(InputStream grammarFile) throws GedcomParseException {
+		System.out.println("Adding gedcom grammar objects...\n");
+		
+		BufferedReader br = new BufferedReader(new InputStreamReader(grammarFile));
 		int lineCount = 0;
 		boolean firstStructureFound = false;
 		boolean descriptionFound = false;
 		
 		try {
-			br = new BufferedReader(new FileReader(grammarFile));
 			
 			String line = null;
 			LinkedList<String> block = new LinkedList<String>();
@@ -295,18 +323,8 @@ public class GedcomStore {
 				parseBlock(block);
 			}
 			
-		} catch (FileNotFoundException e) {
-			throw new GedcomParseException("File " + grammarFile + " not found!");
 		} catch (IOException e) {
 			throw new GedcomParseException("Failed to read line " + lineCount);
-		} finally {
-			if (br != null) {
-				try {
-					br.close();
-				} catch (IOException e) {
-					throw new GedcomParseException("Failed to close file reader for " + grammarFile);
-				}
-			}
 		}
 		
 		System.out.println("\nAdding objects done (" + structures.size() + " objects parsed)\n");
