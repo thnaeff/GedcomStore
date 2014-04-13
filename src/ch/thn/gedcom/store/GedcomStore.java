@@ -525,7 +525,7 @@ public class GedcomStore {
 	}
 	
 	/**
-	 * <i>For internal use!</i><br>
+	 * <i>For internal use only!</i><br>
 	 * <br>
 	 * Creates a {@link GedcomTree} with the given gedcom structure and variation.
 	 * 
@@ -558,7 +558,7 @@ public class GedcomStore {
 		}
 		
 		if (!idToVariationsLinks.get(structureName).containsKey(tag)) {
-			throw new GedcomCreationError("Structure " + structureName + 
+			throw new GedcomAccessError("Structure " + structureName + 
 					" with line ID " + tag + " does not exist.");
 		}
 		
@@ -601,17 +601,22 @@ public class GedcomStore {
 			
 		}
 		
-		String error = "Structure " + structureName + " with line ID " + lineId;
+		String error = null;
 		
 		if (withXRef) {
-			error = error + " and XRef-field";
+			error = " and XRef-field";
 		}
 		
 		if (withValue) {
-			error = error + " and value-field";
+			error = " and value-field";
 		}
 		
-		throw new GedcomCreationError(error + " does not exist.");
+		if (error == null) {
+			error = " and no XRef/value-field";
+		}
+		
+		throw new GedcomCreationError("Structure " + structureName + " with line ID " + 
+				lineId + error + " does not exist.");
 		
 	}
 	
@@ -654,13 +659,13 @@ public class GedcomStore {
 	
 	/**
 	 * Returns <code>true</code> if the structure with the given name has 
-	 * one or more variations
+	 * more than one variations
 	 * 
 	 * @param structureName
 	 * @return
 	 */
 	public boolean structureHasVariations(String structureName) {
-		return (getNumberOfStructureVariations(structureName) > 0);
+		return (getNumberOfStructureVariations(structureName) > 1);
 	}
 	
 	/**
