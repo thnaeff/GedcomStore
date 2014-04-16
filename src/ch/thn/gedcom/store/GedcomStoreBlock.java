@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 
 import ch.thn.gedcom.GedcomHelper;
+import ch.thn.gedcom.data.GedcomAccessError;
 import ch.thn.gedcom.printer.GedcomStorePrinter;
 import ch.thn.util.StringUtil;
 
@@ -207,6 +208,280 @@ public class GedcomStoreBlock {
 			for (String tag : allTags) {				
 				idToLineLinks.put(tag, newLine);
 			}
+		}
+		
+	}
+	
+	/**
+	 * Searches through the gedcom grammar structure and returns the path 
+	 * to the child line with the given tag.
+	 * For example the INDIVIDUAL_RECORD structure:<br />
+	 * <pre>
+	 * 0 INDI
+	 *   1 SEX 
+	 *   ...
+	 *   1 CHAN
+	 *     2 DATE 
+	 *       3 TIME
+	 * </pre>
+	 * CHAN is a child line of INDI. However, it is defined in the gedcom grammar 
+	 * as follows with a structure in between:<br />
+	 * <pre>
+	 * 0 INDI
+	 *   +1 SEX 
+	 *   ...
+	 *   CHANGE_DATE
+	 *   +1 CHAN
+	 *     +2 DATE 
+	 *       +3 TIME
+	 * </pre>
+	 * 
+	 * This means that if this method is executed on the INDI block for example 
+	 * with the parameter tag="CHAN", it returns [CHANGE_DATE, CHAN]. It only works 
+	 * with immediate child lines, thus it is not possible to execute it for "DATE" 
+	 * on the INDI block since it would be impossible to determine if the CHAN 
+	 * DATE is needed or some other DATE tag in another structure.
+	 * 
+	 * @param tagOrStructureName
+	 * @return
+	 */
+	public LinkedList<String> getPathToStoreLine(String tagOrStructureName) {
+		return getPathToStoreLine(tagOrStructureName, null, false, false, false);
+	}
+	
+	/**
+	 * Searches through the gedcom grammar structure and returns the path 
+	 * to the child line with the given tag.
+	 * For example the INDIVIDUAL_RECORD structure:<br />
+	 * <pre>
+	 * 0 INDI
+	 *   1 SEX 
+	 *   ...
+	 *   1 CHAN
+	 *     2 DATE 
+	 *       3 TIME
+	 * </pre>
+	 * CHAN is a child line of INDI. However, it is defined in the gedcom grammar 
+	 * as follows with a structure in between:<br />
+	 * <pre>
+	 * 0 INDI
+	 *   +1 SEX 
+	 *   ...
+	 *   CHANGE_DATE
+	 *   +1 CHAN
+	 *     +2 DATE 
+	 *       +3 TIME
+	 * </pre>
+	 * 
+	 * This means that if this method is executed on the INDI block for example 
+	 * with the parameter tag="CHAN", it returns [CHANGE_DATE, CHAN]. It only works 
+	 * with immediate child lines, thus it is not possible to execute it for "DATE" 
+	 * on the INDI block since it would be impossible to determine if the CHAN 
+	 * DATE is needed or some other DATE tag in another structure.
+	 * 
+	 * @param tagOrStructureName
+	 * @param tag
+	 * @return
+	 */
+	public LinkedList<String> getPathToStoreLine(String tagOrStructureName, String tag) {
+		return getPathToStoreLine(tagOrStructureName, tag, false, false, false);
+	}
+	
+	/**
+	 * Searches through the gedcom grammar structure and returns the path 
+	 * to the child line with the given tag.
+	 * For example the INDIVIDUAL_RECORD structure:<br />
+	 * <pre>
+	 * 0 INDI
+	 *   1 SEX 
+	 *   ...
+	 *   1 CHAN
+	 *     2 DATE 
+	 *       3 TIME
+	 * </pre>
+	 * CHAN is a child line of INDI. However, it is defined in the gedcom grammar 
+	 * as follows with a structure in between:<br />
+	 * <pre>
+	 * 0 INDI
+	 *   +1 SEX 
+	 *   ...
+	 *   CHANGE_DATE
+	 *   +1 CHAN
+	 *     +2 DATE 
+	 *       +3 TIME
+	 * </pre>
+	 * 
+	 * This means that if this method is executed on the INDI block for example 
+	 * with the parameter tag="CHAN", it returns [CHANGE_DATE, CHAN]. It only works 
+	 * with immediate child lines, thus it is not possible to execute it for "DATE" 
+	 * on the INDI block since it would be impossible to determine if the CHAN 
+	 * DATE is needed or some other DATE tag in another structure.
+	 * 
+	 * @param tagOrStructureName
+	 * @param tag
+	 * @param withXRef
+	 * @param withValue
+	 * @return
+	 */
+	public LinkedList<String> getPathToStoreLine(String tagOrStructureName, String tag, 
+			boolean withXRef, boolean withValue) {
+		return getPathToStoreLine(tagOrStructureName, tag, true, withXRef, withValue);
+	}
+	
+	/**
+	 * Searches through the gedcom grammar structure and returns the path 
+	 * to the child line with the given tag.
+	 * For example the INDIVIDUAL_RECORD structure:<br />
+	 * <pre>
+	 * 0 INDI
+	 *   1 SEX 
+	 *   ...
+	 *   1 CHAN
+	 *     2 DATE 
+	 *       3 TIME
+	 * </pre>
+	 * CHAN is a child line of INDI. However, it is defined in the gedcom grammar 
+	 * as follows with a structure in between:<br />
+	 * <pre>
+	 * 0 INDI
+	 *   +1 SEX 
+	 *   ...
+	 *   CHANGE_DATE
+	 *   +1 CHAN
+	 *     +2 DATE 
+	 *       +3 TIME
+	 * </pre>
+	 * 
+	 * This means that if this method is executed on the INDI block for example 
+	 * with the parameter tag="CHAN", it returns [CHANGE_DATE, CHAN]. It only works 
+	 * with immediate child lines, thus it is not possible to execute it for "DATE" 
+	 * on the INDI block since it would be impossible to determine if the CHAN 
+	 * DATE is needed or some other DATE tag in another structure.
+	 * 
+	 * @param tagOrStructureName
+	 * @param withXRef
+	 * @param withValue
+	 * @return
+	 */
+	public LinkedList<String> getPathToStoreLine(String tagOrStructureName, 
+			boolean withXRef, boolean withValue) {
+		return getPathToStoreLine(tagOrStructureName, null, true, withXRef, withValue);
+	}
+	
+	/**
+	 * Searches through the gedcom grammar structure and returns the path 
+	 * to the child line with the given tag.
+	 * For example the INDIVIDUAL_RECORD structure:<br />
+	 * <pre>
+	 * 0 INDI
+	 *   1 SEX 
+	 *   ...
+	 *   1 CHAN
+	 *     2 DATE 
+	 *       3 TIME
+	 * </pre>
+	 * CHAN is a child line of INDI. However, it is defined in the gedcom grammar 
+	 * as follows with a structure in between:<br />
+	 * <pre>
+	 * 0 INDI
+	 *   +1 SEX 
+	 *   ...
+	 *   CHANGE_DATE
+	 *   +1 CHAN
+	 *     +2 DATE 
+	 *       +3 TIME
+	 * </pre>
+	 * 
+	 * This means that if this method is executed on the INDI block for example 
+	 * with the parameter tag="CHAN", it returns [CHANGE_DATE, CHAN]. It only works 
+	 * with immediate child lines, thus it is not possible to execute it for "DATE" 
+	 * on the INDI block since it would be impossible to determine if the CHAN 
+	 * DATE is needed or some other DATE tag in another structure.
+	 * 
+	 * 
+	 * @param tagOrStructureName
+	 * @param tag
+	 * @param lookForXRefAndValueVariation
+	 * @param withXRef
+	 * @param withValue
+	 * @return
+	 */
+	private LinkedList<String> getPathToStoreLine(String tagOrStructureName, String tag, 
+			boolean lookForXRefAndValueVariation, boolean withXRef, boolean withValue) {
+		LinkedList<String> path = new LinkedList<String>();
+		
+		if (tag == null) {
+			tag = tagOrStructureName;
+		}
+		
+		if (hasStoreLine(tagOrStructureName)) {
+			String variation = "";
+			
+			if (storeStructure.getStore().hasStructure(tagOrStructureName)) {
+				//It is a structure
+				if (storeStructure.getStore().getVariationTags(tagOrStructureName).contains(tag)) {
+					//The structure has the given tag variation
+					variation = ";" + tag;
+					
+					if (lookForXRefAndValueVariation) {
+						variation = variation + ";" + Boolean.toString(withXRef) + ";" + Boolean.toString(withValue);
+					}
+				}
+			}
+			path.add(tagOrStructureName + variation);
+			return path;
+		} else {		
+			for(GedcomStoreLine storeLine : storeLines) {
+				//Only check structure lines
+				if (!storeLine.hasStructureName()) {
+					continue;
+				} else if (!storeStructure.getStore().hasStructure(storeLine.getStructureName())) {
+					continue;
+				}
+				
+				GedcomStoreStructure structure = null;
+				String variation = "";
+				
+				try {
+					if (storeStructure.getStore().structureHasVariations(storeLine.getStructureName())) {
+						structure = storeStructure.getStore().getGedcomStructure(storeLine.getStructureName(), tag, lookForXRefAndValueVariation, withXRef, withValue);
+						variation = ";" + tagOrStructureName;
+						
+						if (lookForXRefAndValueVariation) {
+							variation = variation + ";" + Boolean.toString(withXRef) + ";" + Boolean.toString(withValue);
+						}
+					} else {
+						structure = storeStructure.getStore().getGedcomStructure(storeLine.getStructureName(), null, false, false, false);
+					}
+				} catch (GedcomAccessError e) {
+					//Structure and/or variation does not exist
+					continue;
+				}
+				
+				if (structure != null) {
+					if (structure.getStoreBlock().hasStoreLine(tagOrStructureName)) {
+						//Found it!
+						path.add(storeLine.getStructureName() + variation);
+						path.add(tagOrStructureName);
+						return path;
+					} else {
+						LinkedList<String> path2 = structure.getStoreBlock().getPathToStoreLine(tagOrStructureName, tag, lookForXRefAndValueVariation, withXRef, withValue);
+						
+						if (path2 == null) {
+							//Not found in the path
+							continue;
+						}
+						
+						path.add(storeLine.getStructureName() + variation);
+						path.addAll(path2);
+						return path;
+					}
+				} else {
+					//Not found in this path
+				}
+			}
+			
+			return null;
 		}
 		
 	}

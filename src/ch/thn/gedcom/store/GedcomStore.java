@@ -658,6 +658,32 @@ public class GedcomStore {
 	}
 	
 	/**
+	 * Searches for the structure which has the given tag name on the very first level.<br />
+	 * <br />
+	 * The following example would return "INDIVIDUAL_RECORD" if tagName="INDI":
+	 * <pre>
+	 * INDIVIDUAL_RECORD
+	 * 0 INDI  --> tag name on the very first level
+	 *   +1 SEX 
+	 *   ...
+	 * </bre>
+	 * 
+	 * @param tagName
+	 * @return The structure name or <code>null</code> if there is no structure 
+	 * with the given tag name
+	 */
+	public String getStructureNameForTag(String tagName) {
+		
+		for (GedcomStoreStructure s : structures) {
+			if (s.getStoreBlock().hasStoreLine(tagName)) {
+				return s.getStructureName();
+			}
+		}
+		
+		return null;
+	}
+	
+	/**
 	 * Returns <code>true</code> if the structure with the given name has 
 	 * more than one variations
 	 * 

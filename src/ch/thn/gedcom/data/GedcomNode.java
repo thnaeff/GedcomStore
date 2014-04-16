@@ -1463,8 +1463,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	protected boolean getWithValue() {
 		return withValue;
 	}
-
-
+	
 	@Override
 	public String toString() {
 		if (getNodeValue() == null) {
