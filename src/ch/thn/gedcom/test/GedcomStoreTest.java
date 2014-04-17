@@ -49,7 +49,7 @@ public class GedcomStoreTest {
 		store.setValidator(new GedcomDataValidatorTest());
 		
 		try {
-			store.parse("/home/thomas/Projects/java/GedcomStore/gedcomobjects_5.5.1_test.gedg");
+			store.parse(store.getClass().getResource("/gedcomobjects_5.5.1_test.gedg").getPath());
 		} catch (GedcomParseException e) {
 			e.printStackTrace();
 		}
