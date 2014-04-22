@@ -28,7 +28,10 @@ import ch.thn.util.StringUtil;
 
 /**
  * This class contains some static methods which help with formatting data to be used 
- * in gedcom files
+ * in gedcom files.<br />
+ * <br />
+ * All the methods are synchronized for thread save access since many objects (like 
+ * the date formats) are shared.
  * 
  * @author Thomas Naeff (github.com/thnaeff)
  *
@@ -71,7 +74,7 @@ public class GedcomFormatter {
 	 * 
 	 * @return
 	 */
-	public static String getGedcomDateNow() {
+	public synchronized static String getGedcomDateNow() {
 		calendar.setTime(new Date());
 		return gedcomDateYearMonthDay.format(calendar.getTime()).toUpperCase();
 	}
@@ -81,7 +84,7 @@ public class GedcomFormatter {
 	 * 
 	 * @return
 	 */
-	public static String getGedcomTimeNow() {
+	public synchronized static String getGedcomTimeNow() {
 		calendar.setTime(new Date());
 		return gedcomTime.format(calendar.getTime()).toUpperCase();
 	}
@@ -92,7 +95,7 @@ public class GedcomFormatter {
 	 * @param d
 	 * @return
 	 */
-	public static String getGedcomTime(Date d) {
+	public synchronized static String getGedcomTime(Date d) {
 		calendar.setTime(d);
 		return gedcomTime.format(calendar.getTime());
 	}
@@ -107,7 +110,7 @@ public class GedcomFormatter {
 	 * @param day Include the day (only possible if the month is included)?
 	 * @return The date as string, or <code>null</code> if <code>d=null</code>
 	 */
-	public static String getGedcomDate(Date d, boolean month, boolean day) {
+	public synchronized static String getGedcomDate(Date d, boolean month, boolean day) {
 		if (d == null) {
 			return null;
 		}
@@ -138,7 +141,7 @@ public class GedcomFormatter {
 	 * @param day Include the day (only possible if the month is included)?
 	 * @return The date and time as string, or <code>null</code> if <code>d=null</code>
 	 */
-	public static String getGedcomDateTime(Date d, boolean month, boolean day) {
+	public synchronized static String getGedcomDateTime(Date d, boolean month, boolean day) {
 		if (d == null) {
 			return null;
 		}
@@ -174,7 +177,7 @@ public class GedcomFormatter {
 	 * @param gedcomDateString
 	 * @return
 	 */
-	public static Date getDateFromGedcom(String gedcomDateString) {
+	public synchronized static Date getDateFromGedcom(String gedcomDateString) {
 		if (gedcomDateString == null || gedcomDateString.length() == 0) {
 			return null;
 		}
@@ -203,7 +206,7 @@ public class GedcomFormatter {
 	 * @param gedcomTimeString
 	 * @return
 	 */
-	public static Date getTimeFromGedcom(String gedcomTimeString) {
+	public synchronized static Date getTimeFromGedcom(String gedcomTimeString) {
 		if (gedcomTimeString == null || gedcomTimeString.length() == 0) {
 			return null;
 		}
@@ -232,7 +235,7 @@ public class GedcomFormatter {
 	 * @param gedcomDateTimeString
 	 * @return
 	 */
-	public static Date getDateTimeFromGedcom(String gedcomDateTimeString) {
+	public synchronized static Date getDateTimeFromGedcom(String gedcomDateTimeString) {
 		if (gedcomDateTimeString == null || gedcomDateTimeString.length() == 0) {
 			return null;
 		}
@@ -262,7 +265,7 @@ public class GedcomFormatter {
 	 * @param gedcomDate
 	 * @return
 	 */
-	public static boolean isGedcomDate(String gedcomDate) {
+	public synchronized static boolean isGedcomDate(String gedcomDate) {
 		return (getGedcomDateFormat(gedcomDate) != GedcomDateFormat.UNKNOWN);
 	}
 	
@@ -273,7 +276,7 @@ public class GedcomFormatter {
 	 * @param gedcomDate
 	 * @return
 	 */
-	public static GedcomDateFormat getGedcomDateFormat(String gedcomDate) {
+	public synchronized static GedcomDateFormat getGedcomDateFormat(String gedcomDate) {
 		
 		//The gedcom date could either be in the format "dd MMM yyyy", "MMM yyyy" 
 		//or "yyyy"
@@ -300,7 +303,7 @@ public class GedcomFormatter {
 	 * @param dateFormatYearMonthDay
 	 * @return
 	 */
-	public static String convertGedcomDate(String gedcomDate, 
+	public synchronized static String convertGedcomDate(String gedcomDate, 
 			String dateFormatYear, String dateFormatYearMonth, String dateFormatYearMonthDay) {
 		
 		GedcomDateFormat format = getGedcomDateFormat(gedcomDate);
@@ -340,7 +343,7 @@ public class GedcomFormatter {
 	 * @param dateFormatPatterns One or more date formats as used in {@link SimpleDateFormat}
 	 * @return
 	 */
-	public static Date extractDate(String dateString, String... dateFormatPatterns) {
+	public synchronized static Date extractDate(String dateString, String... dateFormatPatterns) {
 		if (dateString == null || dateString.length() == 0) {
 			return null;
 		}
@@ -374,7 +377,7 @@ public class GedcomFormatter {
 	 * @param postfix
 	 * @return
 	 */
-	public static String printIfNotNull(String prefix, String valueToPrintIfNotNull, String postfix) {
+	public synchronized static String printIfNotNull(String prefix, String valueToPrintIfNotNull, String postfix) {
 		if (valueToPrintIfNotNull == null) {
 			return "";
 		}
@@ -389,7 +392,7 @@ public class GedcomFormatter {
 	 * @param inset
 	 * @return
 	 */
-	public static StringBuffer makeInset(int inset) {
+	public synchronized static StringBuffer makeInset(int inset) {
 		StringBuffer sb = new StringBuffer();
 		
 		for (int i = 0; i < inset; i++) {
@@ -406,7 +409,7 @@ public class GedcomFormatter {
 	 * @param preStringLength The current length of the string on this line
 	 * @return
 	 */
-	public static StringBuffer makeRightAlign(int spaceFromLeft, int preStringLength) {
+	public synchronized static StringBuffer makeRightAlign(int spaceFromLeft, int preStringLength) {
 		StringBuffer sb = new StringBuffer();
 				
 		int spaceNeeded = spaceFromLeft - preStringLength;
@@ -440,7 +443,7 @@ public class GedcomFormatter {
 	 * @param itemSuffix
 	 * @return
 	 */
-	public static StringBuilder makeOrList(Collection<String> list, String itemPrefix, String itemSuffix) {
+	public synchronized static StringBuilder makeOrList(Collection<String> list, String itemPrefix, String itemSuffix) {
 		return makeStringList(list, "|", itemPrefix, itemSuffix, true, null, true);
 	}
 	
@@ -456,7 +459,7 @@ public class GedcomFormatter {
 	 * @param addBrackets
 	 * @return
 	 */
-	public static StringBuilder makeStringList(Collection<String> list, String separator, 
+	public synchronized static StringBuilder makeStringList(Collection<String> list, String separator, 
 			String itemPrefix, String itemSuffix, boolean includeNullAndEmpty, 
 			String replaceNullWith, boolean addBrackets) {
 		StringBuilder sb = new StringBuilder();
