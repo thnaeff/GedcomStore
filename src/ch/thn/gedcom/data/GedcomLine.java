@@ -39,9 +39,8 @@ public abstract class GedcomLine {
 	 * 
 	 * @param storeLine
 	 * @param tag
-	 * @param parent
 	 */
-	public GedcomLine(GedcomStoreLine storeLine, String tag, GedcomNode parent) {
+	public GedcomLine(GedcomStoreLine storeLine, String tag) {
 		this.storeLine = storeLine;
 		this.tag = tag;
 	}

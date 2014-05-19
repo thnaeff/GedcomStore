@@ -16,56 +16,26 @@
  */
 package ch.thn.gedcom.printer;
 
+
 import ch.thn.gedcom.data.GedcomLine;
 import ch.thn.gedcom.data.GedcomNode;
-import ch.thn.util.tree.printable.printer.TextTreePrinterLines;
-import ch.thn.util.tree.printable.printer.TreePrinterNode;
-import ch.thn.util.tree.printable.printer.vertical.GenericVerticalDebugTextTreePrinter;
+import ch.thn.util.tree.printer.text.DebugTextTreePrinter;
 
 /**
- * Simply extends {@link DebugVerticalTreePrinter} and is very useful for debugging 
- * a gedcom tree when building it.
+ * A printer which is very useful for debugging a gedcom tree when building it. It 
+ * prints the whole tree with lines connecting the nodes and additional information 
+ * like the line index and child index.
  * 
  * @author Thomas Naeff (github.com/thnaeff)
  * 
- * @see DebugVerticalTreePrinter
  */
-public class GedcomStructureTreePrinter extends GenericVerticalDebugTextTreePrinter<String, GedcomLine, GedcomNode> {
-
-	/**
-	 * 
-	 * 
-	 * @param showAllNodes
-	 */
-	public GedcomStructureTreePrinter(boolean showAllNodes) {
-		super(!showAllNodes, !showAllNodes, false, false);
-	}
-
+public class GedcomStructureTreePrinter extends DebugTextTreePrinter<GedcomLine, GedcomNode> {
+	
+	
+	
 	@Override
-	protected TextTreePrinterLines getNodeData(GedcomNode node) {
-		TextTreePrinterLines lines = new TextTreePrinterLines();
-		
-		if (node.getNodeLine() != null) {
-			lines.addNewLine(node.toString());
-		}
-		
-		return lines;
-	}
-
-	@Override
-	protected void preProcessingNode(
-			TreePrinterNode<String, TextTreePrinterLines> printerNode,
-			int currentNodeLevel, int currentNodeIndex, int currentNodeCount,
-			boolean isHeadNode, boolean isFirstChildNode,
-			boolean isLastChildNode, boolean hasChildNodes) {
-	}
-
-	@Override
-	protected void postProcessingNode(
-			TreePrinterNode<String, TextTreePrinterLines> printerNode,
-			int currentNodeLevel, int currentNodeIndex, int currentNodeCount,
-			boolean isHeadNode, boolean isFirstChildNode,
-			boolean isLastChildNode, boolean hasChildNodes) {
+	public StringBuilder print(GedcomNode printNode) {
+		return super.print(printNode);
 	}
 	
 	

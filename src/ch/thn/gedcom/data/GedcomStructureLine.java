@@ -30,10 +30,9 @@ public class GedcomStructureLine extends GedcomLine {
 	 * 
 	 * @param storeLine
 	 * @param tag
-	 * @param parent
 	 */
-	public GedcomStructureLine(GedcomStoreLine storeLine, String tag, GedcomNode parent) {
-		super(storeLine, tag, parent);
+	public GedcomStructureLine(GedcomStoreLine storeLine, String tag) {
+		super(storeLine, tag);
 		
 		if (!storeLine.hasStructureName()) {
 			throw new GedcomAccessError("The store line " + storeLine.getId() + 

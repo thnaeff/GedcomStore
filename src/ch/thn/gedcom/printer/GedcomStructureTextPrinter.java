@@ -16,16 +16,13 @@
  */
 package ch.thn.gedcom.printer;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 
-import ch.thn.gedcom.GedcomFormatter;
 import ch.thn.gedcom.data.GedcomLine;
 import ch.thn.gedcom.data.GedcomNode;
-import ch.thn.util.tree.printable.TreePrinter;
-import ch.thn.util.tree.printable.printer.TextTreePrinterLines;
-import ch.thn.util.tree.printable.printer.TreePrinterNode;
-import ch.thn.util.tree.printable.printer.TreePrinterTree;
-import ch.thn.util.tree.printable.printer.vertical.GenericVerticalTextTreePrinter;
+import ch.thn.util.tree.onoff.OnOffTreeUtil;
+import ch.thn.util.tree.printer.text.LeftRightTextTreePrinter;
+import ch.thn.util.tree.printer.text.TextTreePrinterLines;
 
 /**
  * A printer which prints the gedcom structure in text format. The output 
@@ -35,9 +32,7 @@ import ch.thn.util.tree.printable.printer.vertical.GenericVerticalTextTreePrinte
  * @author Thomas Naeff (github.com/thnaeff)
  *
  */
-public class GedcomStructureTextPrinter extends GenericVerticalTextTreePrinter<String, GedcomLine, GedcomNode> {
-
-	private boolean flatStructure = true;
+public class GedcomStructureTextPrinter extends LeftRightTextTreePrinter<GedcomLine, GedcomNode> {
 	
 	/**
 	 * Prints the gedcom structure
@@ -55,18 +50,29 @@ public class GedcomStructureTextPrinter extends GenericVerticalTextTreePrinter<S
 	 * for the output and all lines are printed all the way on the left.
 	 */
 	public GedcomStructureTextPrinter(boolean flatStructure) {
-		super(true, true, false, false);
-		this.flatStructure = flatStructure;
+		super();
 		
-		HEAD = "";
-		FIRST_CHILD = "";
-		START = "";
-		END = "";
-		INTERMEDIATE = "";
-		THROUGH = "";
-		AFTEREND = "";
-		ADDITIONALLINETHROUGH = "";
-		ADDITIONALLINEAFTEREND = "";
+		if (flatStructure) {
+			HEAD = "";
+			FIRST_CHILD = "";
+			START = "";
+			END = "";
+			INTERMEDIATE = "";
+			THROUGH = "";
+			AFTEREND = "";
+			ADDITIONALLINETHROUGH = "";
+			ADDITIONALLINEAFTEREND = "";
+		} else {
+			HEAD = "";
+			FIRST_CHILD = "";
+			START = "  ";
+			END = "  ";
+			INTERMEDIATE = "  ";
+			THROUGH = "  ";
+			AFTEREND = "  ";
+			ADDITIONALLINETHROUGH = "  ";
+			ADDITIONALLINEAFTEREND = "  ";
+		}
 		
 	}
 	
@@ -75,82 +81,22 @@ public class GedcomStructureTextPrinter extends GenericVerticalTextTreePrinter<S
 	protected TextTreePrinterLines getNodeData(GedcomNode node) {
 		TextTreePrinterLines lines = new TextTreePrinterLines();
 		
-		if (node.getNodeLine() != null) {
-			lines.addNewLine(node.toString());
+		if (node.getNodeValue() != null) {
+			int index = lines.addNewLine();
+			lines.addValue(index, node.getNodeLevel() + " ");
+			lines.addValue(index, node.getNodeValue().toString());
 		}
 		
 		return lines;
 	}
 	
 	@Override
-	protected void preProcessingNode(
-			TreePrinterNode<String, TextTreePrinterLines> printerNode,
-			int currentNodeLevel, int currentNodeIndex, int currentNodeCount,
-			boolean isHeadNode, boolean isFirstChildNode,
-			boolean isLastChildNode, boolean hasChildNodes) {
+	public StringBuilder print(GedcomNode printNode) {
+		LinkedList<GedcomNode> trees = OnOffTreeUtil.convertToSimpleTree(printNode, true, true);
+		//There is only one tree since only the structure name is ignored and it 
+		//continues with the first tag line which is not ignored
+		return super.print(trees.get(0));
 	}
-
-
-	@Override
-	protected void postProcessingNode(
-			TreePrinterNode<String, TextTreePrinterLines> printerNode,
-			int currentNodeLevel, int currentNodeIndex, int currentNodeCount,
-			boolean isHeadNode, boolean isFirstChildNode,
-			boolean isLastChildNode, boolean hasChildNodes) {
-	}
-	
-	@Override
-	protected StringBuilder createPrinterOutput(
-			ArrayList<TreePrinterTree<String, TextTreePrinterLines>> preparedTrees) {
-		
-		StringBuilder sb = new StringBuilder();
-		
-		for (TreePrinterNode<String, TextTreePrinterLines> tree : preparedTrees) {
-			TextTreePrinterLines lines = null;
-			TreePrinterNode<String, TextTreePrinterLines> nextTreeLine = tree;
-			
-			while (nextTreeLine != null) {
-				lines = nextTreeLine.getNodeValue();
-				
-				//All the lines
-				for (int i = 0; i < lines.getLineCount(); i++) {
-					//All the prefixes
-					for (int j = 0; j < lines.getPrefixCount(i); j++) {
-						sb.append(lines.getPrefix(i, j));
-					}
-					
-					//All the values
-					for (int j = 0; j < lines.getValueCount(i); j++) {
-						if (i == 0 && j == 0) {
-							//Node level in front of the first value and only on 
-							//the first line of a node
-							int level = nextTreeLine.getNodeLevel();
-							if (!flatStructure) {
-								//Indentation
-								sb.append(GedcomFormatter.makeInset(level));
-							}
-							
-							sb.append(level);
-							sb.append(" ");
-						}
-						//Value
-						sb.append(lines.getValue(i, j));
-					}
-					
-					sb.append(TreePrinter.LINE_SEPARATOR);
-				}
-				
-				nextTreeLine = nextTreeLine.getNextPrinterNodeVertical();
-			}
-			
-			//Space before a new tree starts
-			sb.append(TreePrinter.LINE_SEPARATOR);
-		}
-		
-		return sb;
-		
-	}
-	
 	
 	
 }

@@ -59,7 +59,8 @@ public class GedcomStoreBlock {
 	private HashMap<String, GedcomStoreLine> idToLineLinks = null;
 	
 	/**
-	 * The structure which contains this block
+	 * The structure which contains this block. The structure is the starting point 
+	 * which contains a block with all the structure lines
 	 */
 	private GedcomStoreStructure storeStructure = null;
 	

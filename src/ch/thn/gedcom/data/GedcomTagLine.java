@@ -43,10 +43,9 @@ public class GedcomTagLine extends GedcomLine {
 	 * 
 	 * @param storeLine
 	 * @param tag
-	 * @param parent
 	 */
-	public GedcomTagLine(GedcomStoreLine storeLine, String tag, GedcomNode parent) {
-		super(storeLine, tag, parent);
+	public GedcomTagLine(GedcomStoreLine storeLine, String tag) {
+		super(storeLine, tag);
 				
 		if (getStoreLine().hasTagBeforeXRef()) {
 			tag1 = tag;

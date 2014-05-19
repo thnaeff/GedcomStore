@@ -17,24 +17,26 @@
 package ch.thn.gedcom.data;
 
 import java.util.Arrays;
-import java.util.Comparator;
+import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 
 import ch.thn.gedcom.GedcomFormatter;
 import ch.thn.gedcom.store.GedcomStoreBlock;
 import ch.thn.gedcom.store.GedcomStoreLine;
 import ch.thn.gedcom.store.GedcomStoreStructure;
-import ch.thn.util.tree.TreeNodeException;
-import ch.thn.util.tree.printable.GenericPrintableTreeNode;
-import ch.thn.util.tree.printable.TreePrinter;
+import ch.thn.util.tree.core.TreeChildNodesIterator;
+import ch.thn.util.tree.onoff.core.AbstractGenericOnOffKeyTreeNode;
+import ch.thn.util.tree.onoff.core.OnOffTreeNodeModifier;
 
 /**
+ * 
+ * 
+ *
  * @author Thomas Naeff (github.com/thnaeff)
  *
  */
-public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, GedcomNode> {
-
+public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLine, GedcomNode> {
+	
 	/** The delimiter for multiple step values used in {@link #followPath(String...)} **/
 	public static final String PATH_OPTION_DELIMITER = ";";
 
@@ -44,40 +46,22 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	public static final int ADD_MANDATORY = 1;
 	/** Do not create any lines automatically */
 	public static final int ADD_NONE = 2;
-
-	private GedcomStoreBlock storeBlock = null;
-
-	private GedcomStoreLine storeLine = null;
 	
+	/**The block with the information about any child lines*/
+	private GedcomStoreBlock storeBlock = null;
+	/**The line which contains this nodes gedcom grammar information*/
+	private GedcomStoreLine storeLine = null;
+			
 	private String tagOrStructureName = null;
 	private String tag = null;
+	
 	private boolean lookForXRefAndValueVariation = false;
 	private boolean withXRef = false;
 	private boolean withValue = false;
-
-	/**
-	 * 
-	 * 
-	 * @param key
-	 * @param value
-	 */
-	protected GedcomNode(String key, GedcomLine value) {
-		super(key, value);
-	}
 	
 	/**
-	 * 
-	 * 
-	 * @param parent
-	 * @param key
-	 * @param value
-	 */
-	protected GedcomNode(GedcomNode parent, String key, GedcomLine value) {
-		super(parent, key, value);
-	}
-	
-	/**
-	 * 
+	 * Creates a new {@link GedcomNode} with the given information. The new node
+	 * has to be available in the given store block.
 	 * 
 	 * @param storeBlock The block to get the line from
 	 * @param tagOrStructureName
@@ -88,7 +72,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	 */
 	protected GedcomNode(GedcomStoreBlock storeBlock, String tagOrStructureName, 
 			String tag, boolean lookForXRefAndValueVariation, boolean withXRef, boolean withValue) {
-		super(tagOrStructureName, null);
+		this(tagOrStructureName, null);
 
 		this.tagOrStructureName = tagOrStructureName;
 		this.tag = tag;
@@ -96,8 +80,8 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 		this.withXRef = withXRef;
 		this.withValue = withValue;
 
-		//Line with that tag or structure name does not exist
 		if (!storeBlock.hasStoreLine(tagOrStructureName)) {
+			//Line with that tag or structure name does not exist in the given block
 			String s = "";
 
 			if (storeBlock.getParentStoreLine() == null) {
@@ -113,7 +97,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 
 		storeLine = storeBlock.getStoreLine(tagOrStructureName);
 
-		if (storeLine.hasStructureName()) {			
+		if (storeLine.hasStructureName()) {		
 			//It is a structure line, thus it does not have a child block but it 
 			//is only a "link" to the structure 
 			this.storeBlock = storeBlock.getStoreStructure().getStore()
@@ -124,77 +108,70 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 		}
 		
 		if (storeLine.hasStructureName()) {
-			setNodeValue(new GedcomStructureLine(storeLine, tag, this));
+			setNodeValue(new GedcomStructureLine(storeLine, tag));
 		} else {
-			setNodeValue(new GedcomTagLine(storeLine, tagOrStructureName, this));
+			setNodeValue(new GedcomTagLine(storeLine, tagOrStructureName));
 		}
 		
 	}
 	
 	/**
-	 * 
+	 * Only called if a GedcomTree is created which is the head of a gedcom structure
 	 * 
 	 * @param storeBlock
 	 */
 	protected GedcomNode(GedcomStoreStructure storeStructure) {
-		super(storeStructure.getStoreBlock().getStoreStructure().getStructureName(), null);
+		this(storeStructure.getStoreBlock().getStoreStructure().getStructureName(), null);
 		this.storeBlock = storeStructure.getStoreBlock();
 		this.tagOrStructureName = storeStructure.getStoreBlock().getStoreStructure().getStructureName();
-	}
-	
-	@Override
-	protected GedcomNode nodeFactory(String key, GedcomLine value) {
-		return new GedcomNode(key, value);
-	}
-
-	@Override
-	protected GedcomNode nodeFactory(GedcomNode parent, String key,
-			GedcomLine value) {
-		return new GedcomNode(parent, key, value);
-	}
-
-	@Override
-	protected GedcomNode getThis() {
-		return this;
 	}
 	
 	/**
 	 * 
 	 * 
-	 * @return
+	 * @param value
 	 */
-	public GedcomLine getNodeLine() {
-		return getNodeValue();
+	private GedcomNode(GedcomLine value) {
+		super(value);
+	}
+	
+	/**
+	 * 
+	 * 
+	 * @param key
+	 * @param value
+	 */
+	private GedcomNode(String key, GedcomLine value) {
+		super(key, value);
+	}
+	
+	/**
+	 * 
+	 * 
+	 * @param node
+	 */
+	private GedcomNode(GedcomNode node) {
+		super(node);
 	}
 	
 	@Override
-	public void forcePrint(boolean forcePrint) {
-		super.forcePrint(forcePrint);
+	public GedcomNode nodeFactory(GedcomLine value) {
+		return new GedcomNode(value);
 	}
 	
 	@Override
-	public boolean isHeadNode() {
-		return super.isHeadNode();
+	public GedcomNode nodeFactory(GedcomNode node) {
+		return new GedcomNode(node);
 	}
 	
 	@Override
-	public GedcomNode getPreviousNode() {
-		return super.getPreviousNode();
+	public GedcomNode nodeFactory(String key, GedcomLine value) {
+		return new GedcomNode(key, value);
 	}
 	
 	@Override
-	public GedcomNode getNextNode() {
-		return super.getNextNode();
-	}
-	
-	@Override
-	public boolean hasPreviousNode() {
-		return super.hasPreviousNode();
-	}
-	
-	@Override
-	public boolean hasNextNode() {
-		return super.hasNextNode();
+	protected GedcomNode internalGetThis() {
+		return this;
 	}
 	
 	
@@ -273,24 +250,18 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 		GedcomNode newNode = new GedcomNode(storeBlock, tagOrStructureName, tag, 
 				lookForXRefAndValueVariation, withXRef, withValue);
 		
-		int newStoreLinePos = 0;
-		
-		//Get the node position only if it is not a header. The header has position 
-		//0 anyways
-		if (!isHeadNode()) {
-			newStoreLinePos = newNode.getStoreLine().getPos();
+		if (hasChildNodes(newNode.getNodeKey())) {
+			return addChildNode(newNode);
 		}
+		
+		int newStoreLinePos = newNode.getStoreLine().getPos();
 		
 		//Look for the position where to add the new line. The position is defined 
 		//through the parsed lineage linked grammar with the line order
-		for (int i = 0; i < getChildNodeCount(); i++) {
-			if (newStoreLinePos < getChildNode(i).getStoreLine().getPos()) {
+		for (int i = 0; i < getChildNodesCount(); i++) {
+			if (newStoreLinePos < getChildNode(i).getNodeValue().getStoreLine().getPos()) {
 				//Add the new line right before the line with a higher store line position
-				try {
-					addChildNodeAt(i, newNode);
-				} catch (TreeNodeException e) {
-					return null;
-				}
+				addChildNodeAt(i, newNode);
 				
 				return newNode;
 			}
@@ -298,26 +269,13 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 		}
 				
 		//Add the new line at the end
-		try {
-			addChildNode(newNode);
-		} catch (TreeNodeException e) {
-			return null;
-		}
+		addChildNode(newNode);
 		
 		return newNode;
 	}
 	
 	/**
-	 * Returns the parent line of this line
-	 * 
-	 * @return
-	 */
-	public GedcomNode getParentLine() {
-		return getParentNode();
-	}
-	
-	/**
-	 * Returns the child line with the given tag or structure name. Since there 
+	 * Returns the child node with the given tag or structure name. Since there 
 	 * can be more than one line with the same tag or structure name, its line number 
 	 * has to be given.
 	 * 
@@ -325,24 +283,29 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	 * @param index
 	 * @return
 	 */
-	public GedcomNode getChildLine(String tagOrStructureName, int lineNumber) {
+	public GedcomNode getChild(String tagOrStructureName, int lineNumber) {
+		if (!hasChildNodes(tagOrStructureName) 
+				|| getChildNodesCount(tagOrStructureName) <= lineNumber) {
+			return null;
+		}
+		
 		return getChildNode(tagOrStructureName, lineNumber);
 	}
 	
 	/**
-	 * Returns the child line with the given structure name and tag variation
+	 * Returns the child node with the given structure name and tag variation
 	 * 
 	 * @param structureName
 	 * @param tag
 	 * @param lineNumber
 	 * @return
 	 */
-	public GedcomNode getChildLine(String structureName, String tag, int lineNumber) {
-		return getChildLine(structureName, tag, false, false, false, lineNumber);
+	public GedcomNode getChildNode(String structureName, String tag, int lineNumber) {
+		return getChildNode(structureName, tag, false, false, false, lineNumber);
 	}
 	
 	/**
-	 * Returns the child line with the given structure name and variation
+	 * Returns the child node with the given structure name and variation
 	 * 
 	 * @param structureName
 	 * @param tag
@@ -351,9 +314,9 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	 * @param lineNumber
 	 * @return
 	 */
-	public GedcomNode getChildLine(String structureName, String tag, 
+	public GedcomNode getChildNode(String structureName, String tag, 
 			boolean withXRef, boolean withValue, int lineNumber) {
-		return getChildLine(structureName, tag, true, withXRef, withValue, lineNumber);
+		return getChildNode(structureName, tag, true, withXRef, withValue, lineNumber);
 	}
 	
 	/**
@@ -367,38 +330,15 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	 * @param lineNumber
 	 * @return
 	 */
-	private GedcomNode getChildLine(String structureName, String tag, 
+	private GedcomNode getChildNode(String structureName, String tag, 
 			boolean lookForXRefAndValueVariation, boolean withXRef, boolean withValue, int lineNumber) {
-		
-		LinkedList<GedcomNode> children = getChildNodes(structureName);
-		
-		if (children == null || children.size() == 0) {
+				
+		if (isLeafNode()) {
 			//Nothing to do
 			return null;
 		}
-		
-		return searchForNode(children, structureName, tag, lookForXRefAndValueVariation, withXRef, withValue, lineNumber);
-	}
-	
-	/**
-	 * Returns a list with all the children of this node. 
-	 * If there are no children, and empty list is returned.
-	 * 
-	 * @return
-	 */
-	public LinkedList<GedcomNode> getChildLines() {
-		return super.getChildNodes();
-	}
-	
-	/**
-	 * Returns a list with all the children of this node which have the given tag 
-	 * or structure name. If there are no children, and empty list is returned.
-	 * 
-	 * @param tagOrStructureName
-	 * @return
-	 */
-	public LinkedList<GedcomNode> getChildLines(String tagOrStructureName) {
-		return super.getChildNodes(tagOrStructureName);
+
+		return searchForNode(getChildNodesIterator(structureName), structureName, tag, lookForXRefAndValueVariation, withXRef, withValue, lineNumber);
 	}
 	
 	/**
@@ -416,13 +356,15 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	 * is -1, the first line which matches the given parameters will be returned
 	 * @return
 	 */
-	private GedcomNode searchForNode(List<GedcomNode> nodes, 
+	private GedcomNode searchForNode(Iterator<GedcomNode> nodeIterator, 
 			String structureName, String tag, boolean lookForXRefAndValueVariation, 
 			boolean withXRef, boolean withValue, int lineNumber) {
 		int lineIndexCount = -1;
 		
 		//Search for the child node which matches the parameters
-		for (GedcomNode node : nodes) {
+		while (nodeIterator.hasNext()) {	
+			GedcomNode node = nodeIterator.next();
+			
 			if (structureName.equals(node.getTagOrStructureName())
 					&& tag.equals(node.getTag())) {
 				
@@ -462,13 +404,15 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	 * @return The number of nodes which match the given parameters, or -1 if 
 	 * no matching node has been found
 	 */
-	private int countNodes(List<GedcomNode> nodes, 
+	private int countNodes(Iterator<GedcomNode> nodeIterator, 
 			String structureName, String tag, boolean lookForXRefAndValueVariation, 
 			boolean withXRef, boolean withValue) {
 		int matchCount = 0;
 		
 		//Search for the child node which matches the parameters
-		for (GedcomNode node : nodes) {
+		while (nodeIterator.hasNext()) {
+			GedcomNode node = nodeIterator.next();
+			
 			if (structureName.equals(node.getTagOrStructureName())
 					&& tag.equals(node.getTag())) {
 				
@@ -492,7 +436,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	 * 
 	 */
 	public void removeAllChildLines() {
-		super.removeAllChildNodes();
+		removeChildNodes();
 	}
 	
 	/**
@@ -501,7 +445,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	 * @return
 	 */
 	public boolean removeLine() {
-		return super.removeNode();
+		return (removeNode() != null);
 	}
 	
 	/**
@@ -513,8 +457,8 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	 * @return
 	 */
 	public boolean removeLine(boolean branchCleanup) {
-		GedcomNode parent = getParentLine();
-		boolean ret = super.removeNode();
+		GedcomNode parent = getParentNode();
+		boolean ret = removeLine();
 		
 		if (branchCleanup) {
 			parent.branchCleanup();
@@ -524,20 +468,12 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	}
 	
 	/**
-	 * Sorts all the child nodes using the given comparator
-	 * 
-	 * @param childValueSorter
-	 */
-	public void sortChildLines(Comparator<GedcomNode> childValueSorter) {
-		super.sortChildNodesByValue(childValueSorter);
-	}
-	
-	/**
 	 * Replaces this structure node with the give node
 	 * 
 	 */
-	public GedcomNode replaceNode(GedcomNode replacementNode) {
-		return super.replaceNode(replacementNode);
+	public GedcomNode replace(GedcomNode replacementNode) {
+		replaceNode(replacementNode);
+		return replacementNode;
 	}
 	
 	/**
@@ -546,7 +482,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	 * @return
 	 */
 	public boolean hasChildLines() {
-		return super.hasChildNodes();
+		return !isLeafNode();
 	}
 	
 	/**
@@ -555,7 +491,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	 * @return
 	 */
 	public int getNumberOfChildLines() {
-		return super.getChildNodeCount();
+		return getChildNodesCount();
 	}
 	
 	/**
@@ -567,7 +503,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	 * @return
 	 */
 	public int getNumberOfChildLines(String tagOrStructureName) {
-		return getChildNodeCount(tagOrStructureName);
+		return getChildNodesCount(tagOrStructureName);
 	}
 	
 	/**
@@ -581,15 +517,13 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 		if (tag == null) {
 			return getNumberOfChildLines(structureName);
 		}
-		
-		LinkedList<GedcomNode> children = getChildNodes(structureName);
-		
-		if (children == null || children.size() == 0) {
+				
+		if (isLeafNode()) {
 			//Nothing to do
 			return 0;
 		}
 		
-		return countNodes(children, structureName, tag, false, false, false);
+		return countNodes(getChildNodesIterator(structureName), structureName, tag, false, false, false);
 	}
 	
 	/**
@@ -606,15 +540,13 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 		if (tag == null) {
 			return getNumberOfChildLines(structureName);
 		}
-		
-		LinkedList<GedcomNode> children = getChildNodes(structureName);
-		
-		if (children == null || children.size() == 0) {
+				
+		if (isLeafNode()) {
 			//Nothing to do
 			return 0;
 		}
 		
-		return countNodes(children, structureName, tag, true, withXRef, withValue);
+		return countNodes(getChildNodesIterator(structureName), structureName, tag, true, withXRef, withValue);
 	}
 	
 	/**
@@ -624,7 +556,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	 * @return
 	 */
 	public boolean hasChildLine(String tagOrStructureName) {
-		return super.hasChildNode(tagOrStructureName);
+		return hasChildNodes(tagOrStructureName);
 	}
 	
 	/**
@@ -635,7 +567,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	 * @return
 	 */
 	public boolean hasChildLine(String structureName, String tag) {
-		return getChildLine(structureName, tag, false, false, false, -1) != null;
+		return getChildNode(structureName, tag, false, false, false, -1) != null;
 	}
 	
 	/**
@@ -650,7 +582,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	 */
 	public boolean hasChildLine(String structureName, String tag, 
 			boolean withXRef, boolean withValue) {
-		return getChildLine(structureName, tag, true, withXRef, withValue, -1) != null;
+		return getChildNode(structureName, tag, true, withXRef, withValue, -1) != null;
 	}
 
 	/**
@@ -722,10 +654,10 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	 * @return
 	 */
 	public boolean hasLineWithValue(String value) {
-		LinkedList<GedcomNode> nodes = getChildNodes();
+		TreeChildNodesIterator<GedcomNode> iterator = getChildNodesIterator();
 		
-		for (GedcomNode node : nodes) {
-			GedcomLine line = node.getNodeValue();
+		while (iterator.hasNext()) {
+			GedcomLine line = iterator.next().getNodeValue();
 			if (line.isTagLine()
 					&& line.getAsTagLine().getValue() != null
 					&& line.getAsTagLine().getValue().equals(value)) {
@@ -744,10 +676,10 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	 * @return
 	 */
 	public boolean hasLineWithXRef(String xref) {
-		LinkedList<GedcomNode> nodes = getChildNodes();
+		TreeChildNodesIterator<GedcomNode> iterator = getChildNodesIterator();
 		
-		for (GedcomNode node : nodes) {
-			GedcomLine line = node.getNodeValue();
+		while (iterator.hasNext()) {
+			GedcomLine line = iterator.next().getNodeValue();
 			if (line.isTagLine()
 					&& line.getAsTagLine().getXRef() != null
 					&& line.getAsTagLine().getXRef().equals(xref)) {
@@ -804,18 +736,19 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	 * @return
 	 */
 	public boolean maxNumberOfLinesReached(String tagOrStructureName) {
-		if (!hasChildNode(tagOrStructureName)) {
+		if (!hasChildNodes(tagOrStructureName)) {
 			return false;
 		}
 		
-		int lineCount = getChildNodeCount(tagOrStructureName);
+		int lineCount = getChildNodesCount(tagOrStructureName);
 		int max = maxNumberOfLines(tagOrStructureName);
 		
 		return (max != 0 && lineCount >= max);
 	}
 
 	/**
-	 * Returns the store block of which this node is derived from
+	 * Returns the store block which holds the all the information about the 
+	 * possible child lines of this node
 	 * 
 	 * @return
 	 */
@@ -824,7 +757,9 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	}
 	
 	/**
-	 * Returns the store line of which this line is derived from
+	 * Returns the store line of which this line is derived from. The store line 
+	 * holds all the information about this node. There is no store line if this 
+	 * node is the head of a gedcom structure.
 	 * 
 	 * @return
 	 */
@@ -832,6 +767,15 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 		return storeLine;
 	}
 
+	/**
+	 * Returns the structure object of which this structure is derived from. The 
+	 * store structure is the head of a gedcom structure tree.
+	 * 
+	 * @return
+	 */
+	public GedcomStoreStructure getStoreStructure() {
+		return storeBlock.getStoreStructure();
+	}
 
 	/**
 	 * This method checks if the given name is a structure name which is defined
@@ -999,27 +943,24 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 		}
 	}
 	
-	
 	@Override
-	public boolean isInvisibleNode(
-			TreePrinter<String, GedcomLine, ?, ?, ?> printer) {
+	public boolean isNodeIgnored(OnOffTreeNodeModifier modifier) {
 		//Do not print structure lines
 		if (getNodeValue() != null && getNodeValue().isStructureLine()) {
 			return true;
 		}
 		
-		return super.isInvisibleNode(printer);
+		return super.isNodeIgnored(modifier);
 	}
 
 	@Override
-	public boolean printNode(
-			TreePrinter<String, GedcomLine, ?, ?, ?> printer) {
+	public boolean isNodeHidden(OnOffTreeNodeModifier modifier) {
 		//Always print the head
 		if (isHeadNode()) {
-			return true;
+			return false;
 		}
 		
-		return !skipLinePrint(this, false, false, printer);
+		return skipLinePrint(modifier, this, false, false);
 	}
 	
 	/**
@@ -1027,15 +968,14 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	 * are required but not set/empty (depending on the given flags). However, 
 	 * if there is a line in a lower level which has a value/xref, then this 
 	 * line has to be printed in order to print the line with value on the lower level.
-	 *
-	 * @param node
+	 * 
+	 * @param modifier
 	 * @param printEmptyLines
 	 * @param printLinesWithNoValueSet
-	 * @param printer
 	 * @return
 	 */
-	private boolean skipLinePrint(GedcomNode node, boolean printEmptyLines,
-			boolean printLinesWithNoValueSet, TreePrinter<String, GedcomLine, ?, ?, ?> printer) {
+	private boolean skipLinePrint(OnOffTreeNodeModifier modifier, GedcomNode node, 
+			boolean printEmptyLines, boolean printLinesWithNoValueSet) {
 		GedcomLine line = node.getNodeValue();
 		boolean skip = false;
 
@@ -1070,16 +1010,18 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 		//will not be printed. If all the child lines can be skipped, this line
 		//does not need to be printed if skip has already been set to true
 
-		if (skip && node.hasChildNodes()) {
-			LinkedList<GedcomNode> nodes = node.getChildNodes();
-
-			for (GedcomNode n : nodes) {
-				if (n.forcePrint(printer)) {
+		if (skip && !node.isLeafNode()) {
+			TreeChildNodesIterator<GedcomNode> iterator = node.getChildNodesIterator();
+			
+			while (iterator.hasNext()) {
+				GedcomNode childNode = iterator.next();
+				
+				if (forceNodeVisible(modifier)) {
 					//Do not skip, because a lower level node is forced to be printed
 					return false;
 				}
 				
-				if (!skipLinePrint(n, printEmptyLines, printLinesWithNoValueSet, printer)) {
+				if (!skipLinePrint(modifier, childNode, printEmptyLines, printLinesWithNoValueSet)) {
 					//A tag line found which should not be skipped
 					return false;
 				} else {
@@ -1254,9 +1196,9 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 			} else {
 				//Follow path
 				if (pp.tag == null) {
-					currentNode = currentNode.getChildLine(pp.tagOrStructureName, pp.lineNumber);
+					currentNode = currentNode.getChild(pp.tagOrStructureName, pp.lineNumber);
 				} else {
-					currentNode = currentNode.getChildLine(pp.tagOrStructureName, pp.tag, 
+					currentNode = currentNode.getChildNode(pp.tagOrStructureName, pp.tag, 
 							pp.lookForXRefAndValueVariation, pp.withXRef, pp.withValue, pp.lineNumber);
 				}
 				
@@ -1343,7 +1285,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 		
 		if (!branchCleanup) {
 			//Remove the very end node only
-			if (!node.removeLine()) {
+			if (!removeLine()) {
 				return null;
 			}
 			
@@ -1351,10 +1293,10 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 		} else {
 			//Get the parent node before removing the node because removing a 
 			//node clears its parent node
-			GedcomNode parentNode = node.getParentLine();
+			GedcomNode parentNode = node.getParentNode();
 			
 			//Remove the very end node
-			if (!node.removeLine()) {
+			if (!removeLine()) {
 				return null;
 			}
 			
@@ -1373,7 +1315,7 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 	 * @return If any empty parents are removed, it returns the top most removed parent.
 	 */
 	private GedcomNode branchCleanup(GedcomNode node) {
-		if (node.getNumberOfChildLines() > 1) {
+		if (getNumberOfChildLines() > 1) {
 			return null;
 		}
 		
@@ -1397,10 +1339,10 @@ public class GedcomNode extends GenericPrintableTreeNode<String, GedcomLine, Ged
 			
 			firstCheck = false;
 			node = parentNode;
-			parentNode = parentNode.getParentLine();
+			parentNode = parentNode.getParentNode();
 		}
 		
-		if (!node.removeLine()) {
+		if (!removeLine()) {
 			return null;
 		}
 		

@@ -24,6 +24,8 @@ import ch.thn.gedcom.store.GedcomStoreStructure;
  */
 public class GedcomTree extends GedcomNode {
 	
+	private GedcomStoreStructure storeStructure = null;
+		
 	private String structureName = null;
 	
 	
@@ -31,18 +33,44 @@ public class GedcomTree extends GedcomNode {
 	 * 
 	 * 
 	 * @param storeStructure
-	 * @param tag
 	 */
-	public GedcomTree(GedcomStoreStructure storeStructure, String tag) {
+	public GedcomTree(GedcomStoreStructure storeStructure) {
 		super(storeStructure);
 		
+		this.storeStructure = storeStructure;
 		this.structureName = storeStructure.getStructureName();
 		
-		setInvisibleNode(true);
+		ignoreNode(true);
 	}
 	
+	/**
+	 * 
+	 * 
+	 * @return
+	 */
+	public GedcomStoreStructure getStoreStructure() {
+		return storeStructure;
+	}
 
+	/**
+	 * 
+	 * 
+	 * @return
+	 */
 	public String getStructureName() {
+		return structureName;
+	}
+	
+	
+	@Override
+	public GedcomNode nodeFactory(GedcomNode node) {
+		//Factory method needed for the tree copy with OnOffTreeUtil
+		return new GedcomTree(((GedcomTree)node).getStoreStructure());
+	}
+	
+	
+	@Override
+	public String toString() {
 		return structureName;
 	}
 

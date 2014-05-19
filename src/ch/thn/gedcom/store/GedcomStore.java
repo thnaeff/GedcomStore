@@ -487,7 +487,7 @@ public class GedcomStore {
 	 * @return
 	 */
 	public GedcomTree getGedcomTree(String structureName) {
-		return new GedcomTree(getGedcomStructure(structureName, null, false, false, false), null);
+		return new GedcomTree(getGedcomStructure(structureName, null, false, false, false));
 	}
 	
 	/**
@@ -504,7 +504,7 @@ public class GedcomStore {
 	 * @return
 	 */
 	public GedcomTree getGedcomTree(String structureName, String tag) {
-		return new GedcomTree(getGedcomStructure(structureName, tag, false, false, false), tag);
+		return new GedcomTree(getGedcomStructure(structureName, tag, false, false, false));
 	}
 	
 	/**
@@ -521,7 +521,7 @@ public class GedcomStore {
 	 */
 	public GedcomTree getGedcomTree(String structureName, String tag, boolean withXRef,
 			boolean withValue) {
-		return new GedcomTree(getGedcomStructure(structureName, tag, true, withXRef, withValue), tag);
+		return new GedcomTree(getGedcomStructure(structureName, tag, true, withXRef, withValue));
 	}
 	
 	/**

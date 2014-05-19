@@ -26,11 +26,11 @@ import java.util.LinkedList;
 import ch.thn.gedcom.data.GedcomNode;
 import ch.thn.gedcom.data.GedcomTree;
 import ch.thn.gedcom.printer.GedcomStructureHTMLPrinter;
-import ch.thn.gedcom.printer.GedcomStorePrinter;
 import ch.thn.gedcom.printer.GedcomStructureTextPrinter;
 import ch.thn.gedcom.printer.GedcomStructureTreePrinter;
 import ch.thn.gedcom.store.GedcomParseException;
 import ch.thn.gedcom.store.GedcomStore;
+import ch.thn.util.tree.printer.text.GenericLeftRightTextTreePrinter.LeftRightTextPrinterMode;
 
 /**
  * @author Thomas Naeff (github.com/thnaeff)
@@ -57,7 +57,7 @@ public class GedcomStoreTest {
 	
 		System.out.println("\n\n--------------------------------------\n");
 				
-		GedcomStorePrinter.showLevelLineIndex(true);
+//		GedcomStorePrinter.showLevelLineIndex(true);
 		
 		GedcomTree header = store.getGedcomTree("HEADER");
 		
@@ -75,12 +75,12 @@ public class GedcomStoreTest {
 //		
 //		header111.setTagLineValue("version");
 		
-		GedcomStructureTextPrinter textPrinter = new GedcomStructureTextPrinter();
-		GedcomStructureTreePrinter structureTreePrinter = new GedcomStructureTreePrinter(true);
-		GedcomStructureHTMLPrinter htmlPrinter = new GedcomStructureHTMLPrinter(true);
+		GedcomStructureTextPrinter textPrinter = new GedcomStructureTextPrinter(false);
+		GedcomStructureTreePrinter structureTreePrinter = new GedcomStructureTreePrinter();
+//		GedcomStructureHTMLPrinter htmlPrinter = new GedcomStructureHTMLPrinter(true);
 		
-		System.out.println(textPrinter.print(header));
-		System.out.println(structureTreePrinter.print(header));
+//		System.out.println(textPrinter.print(header));
+//		System.out.println(structureTreePrinter.print(header));
 		
 		String structureName = store.getStructureNameForTag("INDI");
 		System.out.println("structureName=" + structureName);
@@ -151,15 +151,16 @@ public class GedcomStoreTest {
 		
 		System.out.println(indi1.followPath("INDIVIDUAL_EVENT_STRUCTURE;DEAT", "DEAT", "INDIVIDUAL_EVENT_DETAIL", "EVENT_DETAIL", "DATE"));
 		
+		System.out.println(" ");
+		
 		System.out.println(textPrinter.print(indi));
 		System.out.println(structureTreePrinter.print(indi));
 		
+		GedcomStructureHTMLPrinter htmlKeyPrinter = new GedcomStructureHTMLPrinter(LeftRightTextPrinterMode.STANDARD, true, true);
 		StringBuilder sb = new StringBuilder();
-		
-		htmlPrinter.appendSimpleHeader(sb, "GedcomStore Test Tree");
-		sb.append(htmlPrinter.print(indi));
-		htmlPrinter.appendSimpleFooter(sb);
-		
+		htmlKeyPrinter.appendSimpleHeader(sb, "Test individual tree");
+		sb.append(htmlKeyPrinter.print(indi));
+		htmlKeyPrinter.appendSimpleFooter(sb);
 		writeToFile("/home/thomas/Desktop/familienfest/gedcomtest.html", sb);
 		
 	}

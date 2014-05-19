@@ -16,11 +16,13 @@
  */
 package ch.thn.gedcom.printer;
 
+import java.util.LinkedList;
+
 import ch.thn.gedcom.data.GedcomLine;
 import ch.thn.gedcom.data.GedcomNode;
-import ch.thn.util.tree.printable.printer.TextTreePrinterLines;
-import ch.thn.util.tree.printable.printer.TreePrinterNode;
-import ch.thn.util.tree.printable.printer.vertical.GenericVerticalHTMLTreePrinter;
+import ch.thn.util.tree.onoff.OnOffTreeUtil;
+import ch.thn.util.tree.printer.html.HTMLTreePrinter;
+import ch.thn.util.tree.printer.text.TextTreePrinterLines;
 /**
  * This gedcom data printer prints the HTML code to view the gedcom structure 
  * as HTML file, for example in a web browser.
@@ -28,16 +30,18 @@ import ch.thn.util.tree.printable.printer.vertical.GenericVerticalHTMLTreePrinte
  * @author Thomas Naeff (github.com/thnaeff)
  *
  */
-public class GedcomStructureHTMLPrinter extends GenericVerticalHTMLTreePrinter<String, GedcomLine, GedcomNode> {
+public class GedcomStructureHTMLPrinter extends HTMLTreePrinter<GedcomLine, GedcomNode> {
 
 	
 	/**
 	 * 
 	 * 
-	 * @param showLines
+	 * @param printerMode
+	 * @param useColors
 	 */
-	public GedcomStructureHTMLPrinter(boolean showLines) {
-		super(false, showLines, true, false, false);
+	public GedcomStructureHTMLPrinter(LeftRightTextPrinterMode printerMode, 
+			boolean useColors, boolean showLines) {
+		super(printerMode, false, useColors);
 		
 		if (!showLines) {
 			HEAD = null;
@@ -52,32 +56,29 @@ public class GedcomStructureHTMLPrinter extends GenericVerticalHTMLTreePrinter<S
 		}
 				
 	}
+	
+	
 
 	@Override
 	protected TextTreePrinterLines getNodeData(GedcomNode node) {
 		TextTreePrinterLines lines = new TextTreePrinterLines();
-				
-		if (node.getNodeLine() != null) {
-			lines.addNewLine(node.toString());
+		
+		if (node.getNodeValue() != null) {
+			int index = lines.addNewLine();
+			lines.addValue(index, node.getNodeLevel() + HTMLSPACE + HTMLSPACE);
+			lines.addValue(index, node.getNodeValue().toString());
 		}
 		
 		return lines;
 	}
-
+	
 	@Override
-	protected void preProcessingNode(
-			TreePrinterNode<String, TextTreePrinterLines> printerNode,
-			int currentNodeLevel, int currentNodeIndex, int currentNodeCount,
-			boolean isHeadNode, boolean isFirstChildNode,
-			boolean isLastChildNode, boolean hasChildNodes) {
+	public StringBuilder print(GedcomNode printNode) {
+		LinkedList<GedcomNode> trees = OnOffTreeUtil.convertToSimpleTree(printNode, true, true);
+		//There is only one tree since only the structure name is ignored and it 
+		//continues with the first tag line which is not ignored
+		return super.print(trees.get(0));
 	}
 
-	@Override
-	protected void postProcessingNode(
-			TreePrinterNode<String, TextTreePrinterLines> printerNode,
-			int currentNodeLevel, int currentNodeIndex, int currentNodeCount,
-			boolean isHeadNode, boolean isFirstChildNode,
-			boolean isLastChildNode, boolean hasChildNodes) {
-	}
 	
 }
