@@ -174,6 +174,10 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 		return this;
 	}
 	
+	@Override
+	public GedcomTree getHeadNode() {
+		return (GedcomTree)super.getHeadNode();
+	}
 	
 	/**
 	 * 
