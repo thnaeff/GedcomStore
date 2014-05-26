@@ -254,10 +254,6 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 		GedcomNode newNode = new GedcomNode(storeBlock, tagOrStructureName, tag, 
 				lookForXRefAndValueVariation, withXRef, withValue);
 		
-		if (hasChildNodes(newNode.getNodeKey())) {
-			return addChildNode(newNode);
-		}
-		
 		int newStoreLinePos = newNode.getStoreLine().getPos();
 		
 		//Look for the position where to add the new line. The position is defined 
