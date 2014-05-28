@@ -458,6 +458,12 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 	 */
 	public boolean removeLine(boolean branchCleanup) {
 		GedcomNode parent = getParentNode();
+		
+		if (parent == null) {
+			//Nothing to do
+			return true;
+		}
+		
 		boolean ret = removeLine();
 		
 		if (branchCleanup) {
@@ -1285,7 +1291,7 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 		
 		if (!branchCleanup) {
 			//Remove the very end node only
-			if (!removeLine()) {
+			if (!node.removeLine()) {
 				return null;
 			}
 			
@@ -1296,7 +1302,7 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 			GedcomNode parentNode = node.getParentNode();
 			
 			//Remove the very end node
-			if (!removeLine()) {
+			if (!node.removeLine()) {
 				return null;
 			}
 			
@@ -1342,7 +1348,7 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 			parentNode = parentNode.getParentNode();
 		}
 		
-		if (!removeLine()) {
+		if (!node.removeLine()) {
 			return null;
 		}
 		

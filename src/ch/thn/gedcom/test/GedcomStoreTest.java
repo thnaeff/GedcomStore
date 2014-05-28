@@ -128,7 +128,8 @@ public class GedcomStoreTest {
 		
 //		indi1.removePath("SEX");
 //		indi141.removePathEnd("DATE");
-//		indi1411.branchCleanup();
+//		indi141.branchCleanup();
+		
 //		indi1411.removeLine(true);
 		
 		
