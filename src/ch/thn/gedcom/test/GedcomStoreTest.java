@@ -125,6 +125,7 @@ public class GedcomStoreTest {
 		
 		GedcomNode indi1411 = indi141.addChildLine("DATE");
 		indi1411.setTagLineValue("date");
+		indi141.addChildLine("NOTE_STRUCTURE", "NOTE", false, true).addChildLine("NOTE").setTagLineValue("abc");
 		
 //		indi1.removePath("SEX");
 //		indi141.removePathEnd("DATE");

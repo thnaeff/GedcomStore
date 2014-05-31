@@ -16,6 +16,8 @@
  */
 package ch.thn.gedcom.data;
 
+import ch.thn.gedcom.store.GedcomStoreLine;
+
 /**
  * The node key as object, to allow ordering of the keys
  *
@@ -23,20 +25,65 @@ package ch.thn.gedcom.data;
  *
  */
 public class NodeKey {
-	
+		
 	private String key = null;
 	
 	private int ordering = 0;
+	private int originalOrdering = 0;
+	
+	private boolean simpleTree = false;
 	
 	/**
 	 * 
 	 * 
 	 * @param key
-	 * @param ordering
+	 * @param storeLine
 	 */
-	public NodeKey(String key, int ordering) {
+	public NodeKey(String key, GedcomStoreLine storeLine) {
 		this.key = key;
-		this.ordering = ordering;
+		this.ordering = (storeLine == null ? 0 : storeLine.getPos());
+		originalOrdering = ordering;
+	}
+	
+	/**
+	 * When creating the simple tree (without any invisible structures), the ordering 
+	 * has to be different since now the lower child nodes have to be ordered 
+	 * next to each other. This method sets the ordering of the structure line 
+	 * above the tag line as the ordering of the tag line.
+	 * 
+	 * @param node
+	 */
+	public void setAsSimpleTreeKey(GedcomNode node) {
+		simpleTree = true;
+		
+		if (node.isRootNode()) {
+			ordering = 0;
+		}
+		
+		while (node != null && node.getParentNode().getNodeValue() != null &&node.getParentNode().getNodeValue().isStructureLine()) {
+			node = node.getParentNode();
+		}
+		
+		ordering = (node == null ? 0 : node.getStoreLine().getPos());
+	}
+	
+	/**
+	 * Returns <code>true</code> if this key has been adjusted as simple tree
+	 * 
+	 * @return
+	 */
+	public boolean asSimpleTree() {
+		return simpleTree;
+	}
+	
+	/**
+	 * Returns the original ordering of this key, before it has been adjusted 
+	 * as simple tree
+	 * 
+	 * @return
+	 */
+	public int getOriginalOrdering() {
+		return originalOrdering;
 	}
 	
 	/**

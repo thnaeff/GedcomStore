@@ -17,6 +17,7 @@
 package ch.thn.gedcom.data;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -78,7 +79,9 @@ public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, Gedc
 	 */
 	protected GedcomNode(GedcomStoreBlock storeBlock, String tagOrStructureName, 
 			String tag, boolean lookForXRefAndValueVariation, boolean withXRef, boolean withValue) {
-		this(createNodeKey(tagOrStructureName, storeBlock.getStoreLine(tagOrStructureName).getPos()), null);
+		this(new NodeKeyComparator(), 
+				createNodeKey(tagOrStructureName, storeBlock.getStoreLine(tagOrStructureName)), 
+				null);
 
 		this.tagOrStructureName = tagOrStructureName;
 		this.tag = tag;
@@ -127,7 +130,9 @@ public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, Gedc
 	 * @param storeBlock
 	 */
 	protected GedcomNode(GedcomStoreStructure storeStructure) {
-		this(createNodeKey(storeStructure.getStoreBlock().getStoreStructure().getStructureName(), 0), null);
+		this(new NodeKeyComparator(), 
+				createNodeKey(storeStructure.getStoreBlock().getStoreStructure().getStructureName(), null), 
+				null);
 		this.storeBlock = storeStructure.getStoreBlock();
 		this.tagOrStructureName = storeStructure.getStoreBlock().getStoreStructure().getStructureName();
 	}
@@ -135,31 +140,39 @@ public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, Gedc
 	/**
 	 * 
 	 * 
+	 * @param comparator
 	 * @param key
 	 * @param value
 	 */
-	private GedcomNode(NodeKey key, GedcomLine value) {
-		super(new NodeKeyComparator(), null, key, value);
+	private GedcomNode(Comparator<? super NodeKey> comparator, NodeKey key, GedcomLine value) {
+		super(comparator, null, key, value);
 		
 		//A node key which is returned instead of NULL. This is necessary since 
 		//the backing map is a TreeMap which does not allow NULL elements and also 
 		//throws a NPE when looking up NULL keys
-		nullNodeKey = new NodeKey("", 0);
+		nullNodeKey = new NodeKey("", null);
 	}
 	
 	@Override
 	public GedcomNode nodeFactory(GedcomLine value) {
-		return new GedcomNode(null, value);
+		return new GedcomNode(new NodeKeyComparator(), null, value);
 	}
 	
 	@Override
 	public GedcomNode nodeFactory(GedcomNode node) {
-		return new GedcomNode(node.getNodeKey(), node.getNodeValue());
+		//!!!
+		//This nodeFactory method is called when the OnOff tree is converted 
+		//into a simple tree (without invisible structures) from OnOffTreeUtil. 
+		//It should not be called from anywhere else since it adjusts the node key 
+		//ordering
+		//!!!
+		node.getNodeKey().setAsSimpleTreeKey(node);
+		return new GedcomNode(node.getKeyComparator(), node.getNodeKey(), node.getNodeValue());
 	}
 	
 	@Override
 	public GedcomNode nodeFactory(NodeKey key, GedcomLine value) {
-		return new GedcomNode(key, value);
+		return new GedcomNode(new NodeKeyComparator(), key, value);
 	}
 	
 	@Override
@@ -178,12 +191,12 @@ public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, Gedc
 	 * structure name.
 	 * 
 	 * @param tagOrStructureName
-	 * @param ordering
+	 * @param storeLine The store line. Used to determine the ordering of the node
 	 * @return
 	 */
-	private static NodeKey createNodeKey(String tagOrStructureName, int ordering) {
+	private static NodeKey createNodeKey(String tagOrStructureName, GedcomStoreLine storeLine) {
 		if (!nodeKeys.containsKey(tagOrStructureName)) {
-			nodeKeys.put(tagOrStructureName, new NodeKey(tagOrStructureName, ordering));
+			nodeKeys.put(tagOrStructureName, new NodeKey(tagOrStructureName, storeLine));
 		}
 		
 		return nodeKeys.get(tagOrStructureName);
@@ -255,7 +268,7 @@ public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, Gedc
 	 */
 	public GedcomNode addChildLine(String tagOrStructureName, String tag, 
 			boolean withXRef, boolean withValue) {
-		return addChildLine(tagOrStructureName, tag, true, false, false);
+		return addChildLine(tagOrStructureName, tag, true, withXRef, withValue);
 	}
 	
 	/**
