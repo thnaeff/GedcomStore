@@ -17,15 +17,16 @@
 package ch.thn.gedcom.data;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 
 import ch.thn.gedcom.GedcomFormatter;
 import ch.thn.gedcom.store.GedcomStoreBlock;
 import ch.thn.gedcom.store.GedcomStoreLine;
 import ch.thn.gedcom.store.GedcomStoreStructure;
-import ch.thn.util.tree.core.TreeChildNodesIterator;
-import ch.thn.util.tree.onoff.core.AbstractGenericOnOffKeyTreeNode;
+import ch.thn.util.tree.onoff.core.AbstractGenericOnOffKeySetTreeNode;
 import ch.thn.util.tree.onoff.core.OnOffTreeNodeModifier;
 
 /**
@@ -35,7 +36,7 @@ import ch.thn.util.tree.onoff.core.OnOffTreeNodeModifier;
  * @author Thomas Naeff (github.com/thnaeff)
  *
  */
-public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLine, GedcomNode> {
+public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, GedcomLine, GedcomNode> {
 	
 	/** The delimiter for multiple step values used in {@link #followPath(String...)} **/
 	public static final String PATH_OPTION_DELIMITER = ";";
@@ -47,11 +48,16 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 	/** Do not create any lines automatically */
 	public static final int ADD_NONE = 2;
 	
+	/** Holds the Tag/StructureName->NodeKey references */
+	private static HashMap<String, NodeKey> nodeKeys = new LinkedHashMap<String, NodeKey>();
+	
+	private NodeKey nullNodeKey = null;
+	
 	/**The block with the information about any child lines*/
 	private GedcomStoreBlock storeBlock = null;
 	/**The line which contains this nodes gedcom grammar information*/
 	private GedcomStoreLine storeLine = null;
-			
+				
 	private String tagOrStructureName = null;
 	private String tag = null;
 	
@@ -72,7 +78,7 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 	 */
 	protected GedcomNode(GedcomStoreBlock storeBlock, String tagOrStructureName, 
 			String tag, boolean lookForXRefAndValueVariation, boolean withXRef, boolean withValue) {
-		this(tagOrStructureName, null);
+		this(createNodeKey(tagOrStructureName, storeBlock.getStoreLine(tagOrStructureName).getPos()), null);
 
 		this.tagOrStructureName = tagOrStructureName;
 		this.tag = tag;
@@ -116,23 +122,14 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 	}
 	
 	/**
-	 * Only called if a GedcomTree is created which is the head of a gedcom structure
+	 * Only called if a GedcomTree is created, which is the head of a gedcom structure
 	 * 
 	 * @param storeBlock
 	 */
 	protected GedcomNode(GedcomStoreStructure storeStructure) {
-		this(storeStructure.getStoreBlock().getStoreStructure().getStructureName(), null);
+		this(createNodeKey(storeStructure.getStoreBlock().getStoreStructure().getStructureName(), 0), null);
 		this.storeBlock = storeStructure.getStoreBlock();
 		this.tagOrStructureName = storeStructure.getStoreBlock().getStoreStructure().getStructureName();
-	}
-	
-	/**
-	 * 
-	 * 
-	 * @param value
-	 */
-	private GedcomNode(GedcomLine value) {
-		super(value);
 	}
 	
 	/**
@@ -141,31 +138,27 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 	 * @param key
 	 * @param value
 	 */
-	private GedcomNode(String key, GedcomLine value) {
-		super(key, value);
-	}
-	
-	/**
-	 * 
-	 * 
-	 * @param node
-	 */
-	private GedcomNode(GedcomNode node) {
-		super(node);
+	private GedcomNode(NodeKey key, GedcomLine value) {
+		super(new NodeKeyComparator(), null, key, value);
+		
+		//A node key which is returned instead of NULL. This is necessary since 
+		//the backing map is a TreeMap which does not allow NULL elements and also 
+		//throws a NPE when looking up NULL keys
+		nullNodeKey = new NodeKey("", 0);
 	}
 	
 	@Override
 	public GedcomNode nodeFactory(GedcomLine value) {
-		return new GedcomNode(value);
+		return new GedcomNode(null, value);
 	}
 	
 	@Override
 	public GedcomNode nodeFactory(GedcomNode node) {
-		return new GedcomNode(node);
+		return new GedcomNode(node.getNodeKey(), node.getNodeValue());
 	}
 	
 	@Override
-	public GedcomNode nodeFactory(String key, GedcomLine value) {
+	public GedcomNode nodeFactory(NodeKey key, GedcomLine value) {
 		return new GedcomNode(key, value);
 	}
 	
@@ -180,12 +173,43 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 	}
 	
 	/**
+	 * Either creates a new node key (if there is none yet for the given tag or 
+	 * structure name), or returns the existing node key for the given tag or 
+	 * structure name.
+	 * 
+	 * @param tagOrStructureName
+	 * @param ordering
+	 * @return
+	 */
+	private static NodeKey createNodeKey(String tagOrStructureName, int ordering) {
+		if (!nodeKeys.containsKey(tagOrStructureName)) {
+			nodeKeys.put(tagOrStructureName, new NodeKey(tagOrStructureName, ordering));
+		}
+		
+		return nodeKeys.get(tagOrStructureName);
+	}
+	
+	/**
+	 * 
+	 * 
+	 * @param tagOrStructureName
+	 * @return
+	 */
+	private NodeKey getNodeKey(String tagOrStructureName) {
+		NodeKey nk = nodeKeys.get(tagOrStructureName);
+		if (nk == null) {
+			return nullNodeKey;
+		}
+		
+		return nk;
+	}
+	/**
 	 * 
 	 * 
 	 * @return
 	 */
 	public GedcomNode newLine() {
-		if (isHeadNode()) {
+		if (isRootNode()) {
 			//The head node is the starting point of the tree
 			return null;
 		}
@@ -254,21 +278,6 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 		GedcomNode newNode = new GedcomNode(storeBlock, tagOrStructureName, tag, 
 				lookForXRefAndValueVariation, withXRef, withValue);
 		
-		int newStoreLinePos = newNode.getStoreLine().getPos();
-		
-		//Look for the position where to add the new line. The position is defined 
-		//through the parsed lineage linked grammar with the line order
-		for (int i = 0; i < getChildNodesCount(); i++) {
-			if (newStoreLinePos < getChildNode(i).getNodeValue().getStoreLine().getPos()) {
-				//Add the new line right before the line with a higher store line position
-				addChildNodeAt(i, newNode);
-				
-				return newNode;
-			}
-			
-		}
-				
-		//Add the new line at the end
 		addChildNode(newNode);
 		
 		return newNode;
@@ -283,13 +292,27 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 	 * @param index
 	 * @return
 	 */
-	public GedcomNode getChild(String tagOrStructureName, int lineNumber) {
-		if (!hasChildNodes(tagOrStructureName) 
-				|| getChildNodesCount(tagOrStructureName) <= lineNumber) {
+	public GedcomNode getChildNode(String tagOrStructureName, int lineNumber) {
+		if (!hasChildNodes(getNodeKey(tagOrStructureName)) 
+				|| getChildNodesCount(getNodeKey(tagOrStructureName)) <= lineNumber) {
 			return null;
 		}
 		
-		return getChildNode(tagOrStructureName, lineNumber);
+		//Since the child nodes are stored in a set, it has to be iterated to the 
+		//given line number
+		Iterator<GedcomNode> childNodes = getChildNodes(getNodeKey(tagOrStructureName)).iterator();
+		int count = 0;
+		while (childNodes.hasNext()) {
+			if (count != lineNumber) {
+				childNodes.next();
+				count++;
+			} else {
+				return childNodes.next();
+			}
+		}
+		
+		//Line number not found
+		return null;
 	}
 	
 	/**
@@ -338,7 +361,7 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 			return null;
 		}
 
-		return searchForNode(getChildNodesIterator(structureName), structureName, tag, lookForXRefAndValueVariation, withXRef, withValue, lineNumber);
+		return searchForNode(getChildNodes(getNodeKey(structureName)).iterator(), structureName, tag, lookForXRefAndValueVariation, withXRef, withValue, lineNumber);
 	}
 	
 	/**
@@ -445,7 +468,7 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 	 * @return
 	 */
 	public boolean removeLine() {
-		return (removeNode() != null);
+		return removeNode();
 	}
 	
 	/**
@@ -509,7 +532,7 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 	 * @return
 	 */
 	public int getNumberOfChildLines(String tagOrStructureName) {
-		return getChildNodesCount(tagOrStructureName);
+		return getChildNodesCount(getNodeKey(tagOrStructureName));
 	}
 	
 	/**
@@ -529,7 +552,7 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 			return 0;
 		}
 		
-		return countNodes(getChildNodesIterator(structureName), structureName, tag, false, false, false);
+		return countNodes(getChildNodes(getNodeKey(structureName)).iterator(), structureName, tag, false, false, false);
 	}
 	
 	/**
@@ -552,7 +575,7 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 			return 0;
 		}
 		
-		return countNodes(getChildNodesIterator(structureName), structureName, tag, true, withXRef, withValue);
+		return countNodes(getChildNodes(getNodeKey(structureName)).iterator(), structureName, tag, true, withXRef, withValue);
 	}
 	
 	/**
@@ -562,7 +585,7 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 	 * @return
 	 */
 	public boolean hasChildLine(String tagOrStructureName) {
-		return hasChildNodes(tagOrStructureName);
+		return hasChildNodes(getNodeKey(tagOrStructureName));
 	}
 	
 	/**
@@ -597,8 +620,8 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 	 * @return
 	 */
 	public String getParentNodeKey() {
-		if (!isHeadNode()) {
-			return getParentNode().getNodeKey();
+		if (!isRootNode()) {
+			return getParentNode().getNodeKey().getKey();
 		} else {
 			return null;
 		}
@@ -660,7 +683,7 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 	 * @return
 	 */
 	public boolean hasLineWithValue(String value) {
-		TreeChildNodesIterator<GedcomNode> iterator = getChildNodesIterator();
+		Iterator<GedcomNode> iterator = getChildNodes().iterator();
 		
 		while (iterator.hasNext()) {
 			GedcomLine line = iterator.next().getNodeValue();
@@ -682,7 +705,7 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 	 * @return
 	 */
 	public boolean hasLineWithXRef(String xref) {
-		TreeChildNodesIterator<GedcomNode> iterator = getChildNodesIterator();
+		Iterator<GedcomNode> iterator = getChildNodes().iterator();
 		
 		while (iterator.hasNext()) {
 			GedcomLine line = iterator.next().getNodeValue();
@@ -742,11 +765,11 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 	 * @return
 	 */
 	public boolean maxNumberOfLinesReached(String tagOrStructureName) {
-		if (!hasChildNodes(tagOrStructureName)) {
+		if (!hasChildNodes(getNodeKey(tagOrStructureName))) {
 			return false;
 		}
 		
-		int lineCount = getChildNodesCount(tagOrStructureName);
+		int lineCount = getChildNodesCount(getNodeKey(tagOrStructureName));
 		int max = maxNumberOfLines(tagOrStructureName);
 		
 		return (max != 0 && lineCount >= max);
@@ -962,7 +985,7 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 	@Override
 	public boolean isNodeHidden(OnOffTreeNodeModifier modifier) {
 		//Always print the head
-		if (isHeadNode()) {
+		if (isRootNode()) {
 			return false;
 		}
 		
@@ -1017,7 +1040,7 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 		//does not need to be printed if skip has already been set to true
 
 		if (skip && !node.isLeafNode()) {
-			TreeChildNodesIterator<GedcomNode> iterator = node.getChildNodesIterator();
+			Iterator<GedcomNode> iterator = node.getChildNodes().iterator();
 			
 			while (iterator.hasNext()) {
 				GedcomNode childNode = iterator.next();
@@ -1100,7 +1123,7 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 	 * For more information about how to use the path array, read 
 	 * {@link #followPath(boolean, boolean, boolean, String...)}
 	 * 
-	 * @param path The path to follow.
+	 * @param path The path to create.
 	 * @return The {@link GedcomNode} of the last object in the path, or <code>null</code> if 
 	 * following the path did not work.
 	 * @see #followPath(boolean, boolean, boolean, String...)
@@ -1202,7 +1225,7 @@ public class GedcomNode extends AbstractGenericOnOffKeyTreeNode<String, GedcomLi
 			} else {
 				//Follow path
 				if (pp.tag == null) {
-					currentNode = currentNode.getChild(pp.tagOrStructureName, pp.lineNumber);
+					currentNode = currentNode.getChildNode(pp.tagOrStructureName, pp.lineNumber);
 				} else {
 					currentNode = currentNode.getChildNode(pp.tagOrStructureName, pp.tag, 
 							pp.lookForXRefAndValueVariation, pp.withXRef, pp.withValue, pp.lineNumber);

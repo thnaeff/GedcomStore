@@ -83,7 +83,7 @@ public class GedcomStructureTextPrinter extends LeftRightTextTreePrinter<GedcomL
 		
 		if (node.getNodeValue() != null) {
 			int index = lines.addNewLine();
-			lines.addValue(index, node.getNodeLevel() + " ");
+			lines.addValue(index, node.getNodeDepth() + " ");
 			lines.addValue(index, node.getNodeValue().toString());
 		}
 		

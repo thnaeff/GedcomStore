@@ -65,7 +65,7 @@ public class GedcomStructureHTMLPrinter extends HTMLTreePrinter<GedcomLine, Gedc
 		
 		if (node.getNodeValue() != null) {
 			int index = lines.addNewLine();
-			lines.addValue(index, node.getNodeLevel() + HTMLSPACE + HTMLSPACE);
+			lines.addValue(index, node.getNodeDepth() + HTMLSPACE + HTMLSPACE);
 			lines.addValue(index, node.getNodeValue().toString());
 		}
 		
