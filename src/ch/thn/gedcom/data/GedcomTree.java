@@ -35,7 +35,7 @@ public class GedcomTree extends GedcomNode {
 	 * @param storeStructure
 	 */
 	public GedcomTree(GedcomStoreStructure storeStructure) {
-		super(storeStructure);
+		super(new NodeKey(storeStructure.getStructureName(), 0), storeStructure);
 		
 		this.storeStructure = storeStructure;
 		this.structureName = storeStructure.getStructureName();

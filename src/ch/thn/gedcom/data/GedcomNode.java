@@ -17,10 +17,8 @@
 package ch.thn.gedcom.data;
 
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 
 import ch.thn.gedcom.GedcomFormatter;
@@ -49,8 +47,10 @@ public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, Gedc
 	/** Do not create any lines automatically */
 	public static final int ADD_NONE = 2;
 	
-	/** Holds the Tag/StructureName->NodeKey references */
-	private static HashMap<String, NodeKey> nodeKeys = new LinkedHashMap<String, NodeKey>();
+	private static NodeKeyComparator nodeKeyComparator = new NodeKeyComparator();
+	
+	/** The tag->NodeKey links */
+	private HashMap<String, NodeKey> nodeKeys = null;
 	
 	private NodeKey nullNodeKey = null;
 	
@@ -70,18 +70,18 @@ public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, Gedc
 	 * Creates a new {@link GedcomNode} with the given information. The new node
 	 * has to be available in the given store block.
 	 * 
-	 * @param storeBlock The block to get the line from
+	 * @param key
+	 * @param storeBlock
 	 * @param tagOrStructureName
 	 * @param tag
 	 * @param lookForXRefAndValueVariation
 	 * @param withXRef
 	 * @param withValue
 	 */
-	protected GedcomNode(GedcomStoreBlock storeBlock, String tagOrStructureName, 
+	protected GedcomNode(NodeKey key, GedcomStoreBlock storeBlock, String tagOrStructureName, 
 			String tag, boolean lookForXRefAndValueVariation, boolean withXRef, boolean withValue) {
-		this(new NodeKeyComparator(), 
-				createNodeKey(tagOrStructureName, storeBlock.getStoreLine(tagOrStructureName)), 
-				null);
+		this(key, (GedcomLine)null);
+//		this(new NodeKey(tagOrStructureName, storeBlock.getStoreLine(tagOrStructureName)), null);
 
 		this.tagOrStructureName = tagOrStructureName;
 		this.tag = tag;
@@ -127,14 +127,14 @@ public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, Gedc
 	/**
 	 * Only called if a GedcomTree is created, which is the head of a gedcom structure
 	 * 
-	 * @param storeBlock
+	 * @param key
+	 * @param storeStructure
 	 */
-	protected GedcomNode(GedcomStoreStructure storeStructure) {
-		this(new NodeKeyComparator(), 
-				createNodeKey(storeStructure.getStoreBlock().getStoreStructure().getStructureName(), null), 
-				null);
+	protected GedcomNode(NodeKey key, GedcomStoreStructure storeStructure) {
+		this(key, (GedcomLine)null);
+//		this(new NodeKey(storeStructure.getStoreBlock().getStoreStructure().getStructureName(), null), null);
 		this.storeBlock = storeStructure.getStoreBlock();
-		this.tagOrStructureName = storeStructure.getStoreBlock().getStoreStructure().getStructureName();
+		this.tagOrStructureName = storeStructure.getStructureName();
 	}
 	
 	/**
@@ -144,18 +144,22 @@ public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, Gedc
 	 * @param key
 	 * @param value
 	 */
-	private GedcomNode(Comparator<? super NodeKey> comparator, NodeKey key, GedcomLine value) {
-		super(comparator, null, key, value);
+	private GedcomNode(NodeKey key, GedcomLine value) {
+		super(nodeKeyComparator, null, key, value);
 		
-		//A node key which is returned instead of NULL. This is necessary since 
-		//the backing map is a TreeMap which does not allow NULL elements and also 
-		//throws a NPE when looking up NULL keys
-		nullNodeKey = new NodeKey("", null);
+		nodeKeys = new HashMap<>();
+		
+		//A null node key. Since the used map of the tree node is a TreeMultiMap, 
+		//it does not accept null keys and fails with an NPE when looking up 
+		//null keys. Thus, this NodeKey is always returned for a null tag or 
+		//structure name
+		nullNodeKey = new NodeKey("", -1);
+		
 	}
 	
 	@Override
 	public GedcomNode nodeFactory(GedcomLine value) {
-		return new GedcomNode(new NodeKeyComparator(), null, value);
+		return new GedcomNode(null, value);
 	}
 	
 	@Override
@@ -167,12 +171,12 @@ public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, Gedc
 		//ordering
 		//!!!
 		node.getNodeKey().setAsSimpleTreeKey(node);
-		return new GedcomNode(node.getKeyComparator(), node.getNodeKey(), node.getNodeValue());
+		return new GedcomNode(node.getNodeKey(), node.getNodeValue());
 	}
 	
 	@Override
 	public GedcomNode nodeFactory(NodeKey key, GedcomLine value) {
-		return new GedcomNode(new NodeKeyComparator(), key, value);
+		return new GedcomNode(key, value);
 	}
 	
 	@Override
@@ -186,36 +190,25 @@ public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, Gedc
 	}
 	
 	/**
-	 * Either creates a new node key (if there is none yet for the given tag or 
-	 * structure name), or returns the existing node key for the given tag or 
-	 * structure name.
-	 * 
-	 * @param tagOrStructureName
-	 * @param storeLine The store line. Used to determine the ordering of the node
-	 * @return
-	 */
-	private static NodeKey createNodeKey(String tagOrStructureName, GedcomStoreLine storeLine) {
-		if (!nodeKeys.containsKey(tagOrStructureName)) {
-			nodeKeys.put(tagOrStructureName, new NodeKey(tagOrStructureName, storeLine));
-		}
-		
-		return nodeKeys.get(tagOrStructureName);
-	}
-	
-	/**
 	 * 
 	 * 
 	 * @param tagOrStructureName
 	 * @return
 	 */
 	private NodeKey getNodeKey(String tagOrStructureName) {
-		NodeKey nk = nodeKeys.get(tagOrStructureName);
-		if (nk == null) {
+		if (tagOrStructureName == null) {
 			return nullNodeKey;
 		}
 		
-		return nk;
+		if (!nodeKeys.containsKey(tagOrStructureName)) {
+			NodeKey newNodeKey = new NodeKey(tagOrStructureName, storeBlock.getStoreLine(tagOrStructureName));
+			nodeKeys.put(tagOrStructureName, newNodeKey);
+			return newNodeKey;
+		}
+		
+		return nodeKeys.get(tagOrStructureName);
 	}
+	
 	/**
 	 * 
 	 * 
@@ -288,7 +281,8 @@ public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, Gedc
 			return null;
 		}
 		
-		GedcomNode newNode = new GedcomNode(storeBlock, tagOrStructureName, tag, 
+		GedcomNode newNode = new GedcomNode(getNodeKey(tagOrStructureName), 
+				storeBlock, tagOrStructureName, tag, 
 				lookForXRefAndValueVariation, withXRef, withValue);
 		
 		addChildNode(newNode);

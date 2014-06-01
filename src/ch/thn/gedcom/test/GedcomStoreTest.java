@@ -25,6 +25,7 @@ import java.util.LinkedList;
 
 import ch.thn.gedcom.data.GedcomNode;
 import ch.thn.gedcom.data.GedcomTree;
+import ch.thn.gedcom.printer.GedcomStorePrinter;
 import ch.thn.gedcom.printer.GedcomStructureHTMLPrinter;
 import ch.thn.gedcom.printer.GedcomStructureTextPrinter;
 import ch.thn.gedcom.printer.GedcomStructureTreePrinter;
@@ -54,6 +55,8 @@ public class GedcomStoreTest {
 			e.printStackTrace();
 		}
 		
+		GedcomStorePrinter.showLevelLineIndex(true);
+		System.out.println(GedcomStorePrinter.preparePrint(store.getGedcomTree("INDIVIDUAL_RECORD").getStoreBlock(), 0, false));
 	
 		System.out.println("\n\n--------------------------------------\n");
 				

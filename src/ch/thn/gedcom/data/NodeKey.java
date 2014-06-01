@@ -17,6 +17,7 @@
 package ch.thn.gedcom.data;
 
 import ch.thn.gedcom.store.GedcomStoreLine;
+import ch.thn.util.NumberUtil;
 
 /**
  * The node key as object, to allow ordering of the keys
@@ -27,6 +28,7 @@ import ch.thn.gedcom.store.GedcomStoreLine;
 public class NodeKey {
 		
 	private String key = null;
+	private String orderingString = null;
 	
 	private int ordering = 0;
 	private int originalOrdering = 0;
@@ -40,9 +42,30 @@ public class NodeKey {
 	 * @param storeLine
 	 */
 	public NodeKey(String key, GedcomStoreLine storeLine) {
+		this(key, (storeLine == null ? 0 : storeLine.getPos()));
+	}
+	
+	/**
+	 * 
+	 * 
+	 * @param key
+	 * @param ordering
+	 */
+	public NodeKey(String key, int ordering) {
 		this.key = key;
-		this.ordering = (storeLine == null ? 0 : storeLine.getPos());
+		this.ordering = ordering;
 		originalOrdering = ordering;
+		
+		updateOrderingString();
+		
+	}
+	
+	/**
+	 * 
+	 * 
+	 */
+	private void updateOrderingString() {
+		orderingString = NumberUtil.formatNumber(ordering, 2, 0, true, false) + key;
 	}
 	
 	/**
@@ -65,6 +88,8 @@ public class NodeKey {
 		}
 		
 		ordering = (node == null ? 0 : node.getStoreLine().getPos());
+		
+		updateOrderingString();
 	}
 	
 	/**
@@ -102,6 +127,15 @@ public class NodeKey {
 	 */
 	public int getOrdering() {
 		return ordering;
+	}
+	
+	/**
+	 * 
+	 * 
+	 * @return
+	 */
+	public String getOrderingString() {
+		return orderingString;
 	}
 	
 	@Override
