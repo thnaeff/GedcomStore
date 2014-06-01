@@ -141,6 +141,12 @@ public class GedcomStoreTest {
 		
 		
 		indi13.newLine().addChildLine("FAMS").setTagLineXRef("famslink2");
+		//Test if adding a line with the same value works
+		//It should add the link to the whole structure (as SPOUSE_TO_FAMILY_LINK -> FAMS), 
+		//and it will be printed with the structure tree printer, but 
+		//the text and HTML tree printer should not show the line since it should 
+		//be considered as duplicate
+		indi13.newLine().addChildLine("FAMS").setTagLineXRef("famslink2");
 		
 		indi1.createPath("NOTE_STRUCTURE;NOTE;false;true", "NOTE");
 		LinkedList<String> pathNote = indi1.getStoreBlock().getPathToStoreLine("NOTE", true, false);

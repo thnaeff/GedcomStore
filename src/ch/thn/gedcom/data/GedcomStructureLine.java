@@ -23,7 +23,11 @@ import ch.thn.gedcom.store.GedcomStoreLine;
  *
  */
 public class GedcomStructureLine extends GedcomLine {
-		
+	
+	private static long uniqueIdCount = 0;
+	
+	private String uniqueIdString = null;
+	private String toString = null;
 
 	/**
 	 * 
@@ -39,8 +43,32 @@ public class GedcomStructureLine extends GedcomLine {
 					" is not a structure line");
 		}
 		
+		if (getTag() != null) {
+			toString = getStructureName() + " (" + getTag() + ")";
+		} else {
+			toString = getStructureName();
+		}
+		
+		uniqueIdString = String.valueOf(generateUniqueId());
 	}
 	
+	/**
+	 * 
+	 * 
+	 * @return
+	 */
+	private long generateUniqueId() {
+		if (++uniqueIdCount == Long.MAX_VALUE) {
+			throw new GedcomStructureLineError("Unique ID overflow!");
+		}
+		
+		return uniqueIdCount;
+	}
+	
+	@Override
+	protected String getUniqueId() {
+		return uniqueIdString;
+	}
 	
 	public String getStructureName() {
 		return getStoreLine().getStructureName();
@@ -55,11 +83,7 @@ public class GedcomStructureLine extends GedcomLine {
 	
 	@Override
 	public String toString() {
-		if (getTag() != null) {
-			return getStructureName() + " (" + getTag() + ")";
-		} else {
-			return getStructureName();
-		}
+		return toString;
 	}
 
 
@@ -72,6 +96,34 @@ public class GedcomStructureLine extends GedcomLine {
 	@Override
 	public GedcomStructureLine getAsStructureLine() {
 		return this;
+	}
+	
+	
+	
+	/************************************************************************
+	 * 
+	 * 
+	 *
+	 * @author Thomas Naeff (github.com/thnaeff)
+	 *
+	 */
+	private class GedcomStructureLineError extends Error {
+		
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -4843907542449869554L;
+
+		/**
+		 * 
+		 * 
+		 * @param message
+		 */
+		public GedcomStructureLineError(String message) {
+			super(message);
+		}
+		
+		
 	}
 
 }

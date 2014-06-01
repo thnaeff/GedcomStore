@@ -53,6 +53,14 @@ public abstract class GedcomLine {
 	public abstract String getId();
 	
 	/**
+	 * Returns the unique ID of this line. This is used for sorting/avoiding 
+	 * duplicates
+	 * 
+	 * @return
+	 */
+	protected abstract String getUniqueId();
+	
+	/**
 	 * 
 	 * 
 	 * @return

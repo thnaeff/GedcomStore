@@ -48,6 +48,7 @@ public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, Gedc
 	public static final int ADD_NONE = 2;
 	
 	private static NodeKeyComparator nodeKeyComparator = new NodeKeyComparator();
+	private static NodeValueComparator nodeValueComparator = new NodeValueComparator();
 	
 	/** The tag->NodeKey links */
 	private HashMap<String, NodeKey> nodeKeys = null;
@@ -145,7 +146,7 @@ public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, Gedc
 	 * @param value
 	 */
 	private GedcomNode(NodeKey key, GedcomLine value) {
-		super(nodeKeyComparator, null, key, value);
+		super(nodeKeyComparator, nodeValueComparator, key, value);
 		
 		nodeKeys = new HashMap<>();
 		

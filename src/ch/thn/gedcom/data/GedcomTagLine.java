@@ -32,7 +32,10 @@ public class GedcomTagLine extends GedcomLine {
 	private String tag1 = null;
 	private String tag2 = null;
 	private String xref = null;
-	private String value = null;	
+	private String value = null;
+	
+	private String uniqueIdString = null;
+	private String toString = null;
 	
 	private boolean isValueSet = false;
 	private boolean isXRefSet = false;
@@ -53,8 +56,62 @@ public class GedcomTagLine extends GedcomLine {
 			tag2 = tag;
 		}
 		
+		updateMetadata();
 	}
 	
+	private void updateMetadata() {
+		
+		//Since a TreeMultiMap is used as GedcomNode, the key-value pairs have to 
+		//be unique to be added (no double key-value pairs allowed). There might 
+		//be multiple of the same keys, but the node value (which is a GedcomNode 
+		//that uses the GedcomLine.toString method in its own toString method) 
+		//has to be unique. The GedcomTagLine gives this uniqueness through 
+		//its value or xref.
+		
+		StringBuilder sb = new StringBuilder();
+		
+		//TAG before XREF
+		if (getStoreLine().hasTagBeforeXRef()) {
+			sb.append(getTag());
+		}
+		
+		// XREF
+		if (requiresXRef()) {
+			if (sb.length() > 0) {
+				sb.append(DELIM);
+			}
+			
+			sb.append("@" + xref + "@");
+		}
+		
+		//TAG after XREF
+		if (getStoreLine().hasTagAfterXRef()) {
+			if (sb.length() > 0) {
+				sb.append(DELIM);
+			}
+			
+			sb.append(getTag());
+		}
+		
+		//VALUE
+		if (requiresValue()) {
+			if (sb.length() > 0) {
+				sb.append(DELIM);
+			}
+			
+			sb.append(value);
+		}
+				
+		
+		uniqueIdString = sb.toString();
+		toString = uniqueIdString;
+		
+	}
+	
+	@Override
+	protected String getUniqueId() {
+		return uniqueIdString;
+	}
 	
 	@Override
 	public String getTag() {
@@ -245,6 +302,7 @@ public class GedcomTagLine extends GedcomLine {
 		
 		this.value = value;
 		isValueSet(true);
+		updateMetadata();
 		return this;
 	}
 	
@@ -285,6 +343,7 @@ public class GedcomTagLine extends GedcomLine {
 		
 		this.xref = xref;
 		isXRefSet(true);
+		updateMetadata();
 		return this;
 	}
 	
@@ -298,6 +357,7 @@ public class GedcomTagLine extends GedcomLine {
 		value = null;
 		isValueSet(false);
 		isXRefSet(false);
+		updateMetadata();
 	}
 	
 	
@@ -313,42 +373,7 @@ public class GedcomTagLine extends GedcomLine {
 	
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		
-		//TAG before XREF
-		if (getStoreLine().hasTagBeforeXRef()) {
-			sb.append(getTag());
-		}
-		
-		// XREF
-		if (requiresXRef()) {
-			if (sb.length() > 0) {
-				sb.append(DELIM);
-			}
-			
-			sb.append("@" + xref + "@");
-		}
-		
-		//TAG after XREF
-		if (getStoreLine().hasTagAfterXRef()) {
-			if (sb.length() > 0) {
-				sb.append(DELIM);
-			}
-			
-			sb.append(getTag());
-		}
-		
-		//VALUE
-		if (requiresValue()) {
-			if (sb.length() > 0) {
-				sb.append(DELIM);
-			}
-			
-			sb.append(value);
-		}
-				
-		
-		return sb.toString();
+		return toString;
 	}
 
 
