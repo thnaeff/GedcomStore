@@ -1,4 +1,4 @@
-GEDCOM grammar file (*.gedg) format for import in GedcomStore
+GEDCOM grammar file (*.gedg) format for import in GedcomStore 
 ---------------------------------------------------------------
 
 The format of the GEDCOM grammar files which contain the data structures needs to follow a simple format. Take a look at the given GEDCOM files like gedcomobjects_5.5.gedg to see examples of the format.
