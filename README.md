@@ -4,7 +4,7 @@
 GedcomStore is a library written in Java to parse lineage-linked grammar from a text file. The lineage-linked grammar defines the structure of a GEDCOM. Through GedcomStore, those structures can then be retrieved as Java objects in order to create a valid GEDCOM ouput.
 Since the structures are created according to the grammar file, the output does not have to be validated against the GEDCOM structure - only valid ouput which matches the given grammar file can be created. However, the values itself are not validated automatically but validators can be implemented (see "Not yet implemented").
 
-Download the library [Version 0.2 as .jar file here](GedcomStore_0.2.jar).
+Download the library [Version 0.2 as .jar file here](GedcomStore_0.2.jar?raw=true).
 
 
 ## Key features
