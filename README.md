@@ -1,17 +1,17 @@
 # GedcomStore
-**A library to parse a [lineage-linked grammar file](http://homepages.rootsweb.ancestry.com/~pmcbride/gedcom/55gcch2.htm) and build a valid [GEDCOM](http://en.wikipedia.org/wiki/GEDCOM)-structure according to the parsed definitions**
+**A library to load the GEDCOM structure definitions (from a [lineage-linked grammar file](http://homepages.rootsweb.ancestry.com/~pmcbride/gedcom/55gcch2.htm)) into memory and build a valid [GEDCOM](http://en.wikipedia.org/wiki/GEDCOM)-structure according to the parsed definitions**
 
-GedcomStore is a library written in Java to parse lineage-linked grammar from a text file. It then gives access to the parsed structures in order to create a valid GEDCOM ouput.
-Since the structures are created according to the grammar file, the output does not have to be validated against the GEDCOM structure - only valid ouput which matches the given input file can be created. However, the values itself are not validated automatically but validators can be implemented (see "Not yet implemented").
+GedcomStore is a library written in Java to parse lineage-linked grammar from a text file. The lineage-linked grammar defines the structure of a GEDCOM. Through GedcomStore, those structures can then be retrieved as Java objects in order to create a valid GEDCOM ouput.
+Since the structures are created according to the grammar file, the output does not have to be validated against the GEDCOM structure - only valid ouput which matches the given grammar file can be created. However, the values itself are not validated automatically but validators can be implemented (see "Not yet implemented").
 
-Download the library [Version 0.1 as .jar file here](https://github.com/thnaeff/GedcomStore/blob/master/GedcomStore_0.1.jar?raw=true).
+Download the library [Version 0.2 as .jar file here](https://github.com/thnaeff/GedcomStore/blob/master/GedcomStore_0.2.jar?raw=true).
 
 
 ## Key features
 * Create your own gedcom definition file using lineage-linked grammar (preferably, take one of the "standards" and modify them to your needs if necessary - see the next point)
 * Comes with the gedcom definition files for version 5.5 (GedcomNodes_5.5.gedg) and 5.5.1 (GedcomNodes_5.5.1.gedg), plus a slightly modified version for the [GRAMPS](http://gramps-project.org) software (GedcomNodes_5.5.1_gramps.gedg)
 * Supports ALL the fields in the GEDCOM lineage-linked grammar (See "Not yet implemented" for details)
-* Choose if you want to populate structures with all mandatory lines or with all available lines
+* Choose if you want to populate structures with nothing, all mandatory lines or with all available lines
 * If lines do not exist in structures when accessed by path, various possibilities are available to create those lines
 * Easy creation and access to the structures, lines and values
 	* Just define the "path" to the needed line by using an array (or variable argument string), like: `"INDI", "REFN", "TYPE", ...`
@@ -24,7 +24,7 @@ Download the library [Version 0.1 as .jar file here](https://github.com/thnaeff/
 	* `GedcomStructureTreePrinter`: Prints a tree of the whole gedcom structure. It has an option to even print invisible tree nodes and is very useful for debugging when creating a structure
 	* `GedcomStructureTextPrinter`: Prints a gedcom structure as text. The output of this printer can be saved in a text file and imported in any software which supports the GEDCOM format
 	* `GedcomStructureHTMLPrinter`: Prints the gedcom structure formatted with HTML. Save this output in a HTML file to view the structure in a web browser
-	* A `GedcomNode` is an extension of the `TreeNode` in my Util library, thus any `TreeNodePrinter` can be used for printing and new printers can be created by extending that class.
+	* A `GedcomNode` is an extension of the `TreeNode` in my Util library, thus any `TreePrinter` can be used for printing and new printers can be created by extending that class.
 
 
 ********************************************************************************************************
@@ -109,7 +109,7 @@ tree.addMandatoryChildLines(true);
 
 
 
-Now, starting  the head of the tree, you can navigate throught the structure in two ways. Either step by step by using the `addChildLine`, `getChildLine`, `getParentLine` methods etc., or simply by using one of the the methods `followPath`, `followPathCreate`, `createPath`, `createPathEnd` (some of them also take care of any missing lines or create new paths).
+Now, starting at the head of the tree, you can navigate throught the structure in two ways. Either step by step by using the `addChildLine`, `getChildLine`, `getParentLine` methods etc., or simply by using one of the the methods `followPath`, `followPathCreate`, `createPath`, `createPathEnd` (some of them also take care of any missing lines or create new paths).
 The following lines show the usage with three examples.
 
 ```java
@@ -124,7 +124,7 @@ The second line shows how to use the more convenient way with `followPath`, whic
 The third line shows a longer path which also includes a path step with multiple parts. Since the `INDIVIDUAL_ATTRIBUTE_STRUCTURE` has multiple variations, the tag given after the structure name specifies the required variation. Another detail about the third line is that the method `followPathCreate` is used. This method creates a new path if the given path does not exist.
 The second and third ways are easier to use, but also slower (it always has to follow the whole path). However, a combination of the first and the second way is possible too of course.
 
-*Hint: When accessing/creating lines, it is sometimes useful to print a node or the structure using `System.out.println(tree.print(new GedcomStructureTreePrinter(true)));` to see the whole structure*
+*Hint: When accessing/creating lines, it is sometimes useful to print a node or the structure to see the whole structure and the building progress.*
 
 
 
@@ -136,16 +136,19 @@ node.setTagLineValue("some value");
 ```
 
 
-Now that we have created a little structure with some lines, it is time to print the structure. Since a `GedcomNode` is extended from `TreeNode` (from my [Util](http://github.com/thnaeff/Util) library), any of the `TreeNodePrinter`s can be used to print the gedcom tree. However, `GedcomStore` comes with a few printers which are prepared for the use with the gedcom structures: `GedcomStructureTreePrinter`, `GedcomStructureTextPrinter` and `GedcomStructureHTMLPrinter`. See the "Key Features" section in this readme to get a short description of each printer.
+Now that we have created a little structure with some lines, it is time to print the structure. Since a `GedcomNode` is extended from `TreeNode` (from my [Util](http://github.com/thnaeff/Util) library), any of the `TreePrinter`s can be used to print the gedcom tree. However, `GedcomStore` comes with a few printers which are prepared for the use with the gedcom structures: `GedcomStructureTreePrinter`, `GedcomStructureTextPrinter` and `GedcomStructureHTMLPrinter`. See the "Key Features" section in this readme to get a short description of each printer.
 
 
 ```java
-System.out.println(node.print(new GedcomStructureTextPrinter()));
-System.out.println(node.print(new GedcomStructureTreePrinter(true)));
+GedcomStructureTextPrinter textPrinter = new GedcomStructureTextPrinter(false);
+System.out.println(textPrinter.print(tree));
+
+GedcomStructureTreePrinter structureTreePrinter = new GedcomStructureTreePrinter();
+System.out.println(structureTreePrinter.print(tree));
 ```
 
 
-To print the `GedcomStore` and the structures stored in it, the GedcomStorePrinter class has to be used:
+To print the `GedcomStore` and the lineage-linked grammar definitions stored in it, the `GedcomStorePrinter` class has to be used:
 
 ```java
 System.out.println(GedcomStorePrinter.preparePrint(store, 2, false));
@@ -160,7 +163,7 @@ The data generated by the `GedcomStructureTextPrinter` printer can also be writt
 
 
 ## Examples
-More examples can be found in src/ch/thn/gedcom/test/
+More examples can be found in the [test directory](src/ch/thn/gedcom/test/)
 
 
 ********************************************************************************************************
