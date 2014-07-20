@@ -300,7 +300,7 @@ public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, Gedc
 	 * @param index
 	 * @return
 	 */
-	public GedcomNode getChildNode(String tagOrStructureName, int lineNumber) {
+	public GedcomNode getChildLine(String tagOrStructureName, int lineNumber) {
 		if (!hasChildNodes(getNodeKey(tagOrStructureName)) 
 				|| getChildNodesCount(getNodeKey(tagOrStructureName)) <= lineNumber) {
 			return null;
@@ -331,8 +331,8 @@ public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, Gedc
 	 * @param lineNumber
 	 * @return
 	 */
-	public GedcomNode getChildNode(String structureName, String tag, int lineNumber) {
-		return getChildNode(structureName, tag, false, false, false, lineNumber);
+	public GedcomNode getChildLine(String structureName, String tag, int lineNumber) {
+		return getChildLine(structureName, tag, false, false, false, lineNumber);
 	}
 	
 	/**
@@ -345,9 +345,9 @@ public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, Gedc
 	 * @param lineNumber
 	 * @return
 	 */
-	public GedcomNode getChildNode(String structureName, String tag, 
+	public GedcomNode getChildLine(String structureName, String tag, 
 			boolean withXRef, boolean withValue, int lineNumber) {
-		return getChildNode(structureName, tag, true, withXRef, withValue, lineNumber);
+		return getChildLine(structureName, tag, true, withXRef, withValue, lineNumber);
 	}
 	
 	/**
@@ -361,7 +361,7 @@ public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, Gedc
 	 * @param lineNumber
 	 * @return
 	 */
-	private GedcomNode getChildNode(String structureName, String tag, 
+	private GedcomNode getChildLine(String structureName, String tag, 
 			boolean lookForXRefAndValueVariation, boolean withXRef, boolean withValue, int lineNumber) {
 				
 		if (isLeafNode()) {
@@ -604,7 +604,7 @@ public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, Gedc
 	 * @return
 	 */
 	public boolean hasChildLine(String structureName, String tag) {
-		return getChildNode(structureName, tag, false, false, false, -1) != null;
+		return getChildLine(structureName, tag, false, false, false, -1) != null;
 	}
 	
 	/**
@@ -619,7 +619,7 @@ public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, Gedc
 	 */
 	public boolean hasChildLine(String structureName, String tag, 
 			boolean withXRef, boolean withValue) {
-		return getChildNode(structureName, tag, true, withXRef, withValue, -1) != null;
+		return getChildLine(structureName, tag, true, withXRef, withValue, -1) != null;
 	}
 
 	/**
@@ -627,7 +627,7 @@ public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, Gedc
 	 * 
 	 * @return
 	 */
-	public String getParentNodeKey() {
+	public String getParentLineKey() {
 		if (!isRootNode()) {
 			return getParentNode().getNodeKey().getKey();
 		} else {
@@ -1233,9 +1233,9 @@ public class GedcomNode extends AbstractGenericOnOffKeySetTreeNode<NodeKey, Gedc
 			} else {
 				//Follow path
 				if (pp.tag == null) {
-					currentNode = currentNode.getChildNode(pp.tagOrStructureName, pp.lineNumber);
+					currentNode = currentNode.getChildLine(pp.tagOrStructureName, pp.lineNumber);
 				} else {
-					currentNode = currentNode.getChildNode(pp.tagOrStructureName, pp.tag, 
+					currentNode = currentNode.getChildLine(pp.tagOrStructureName, pp.tag, 
 							pp.lookForXRefAndValueVariation, pp.withXRef, pp.withValue, pp.lineNumber);
 				}
 				
