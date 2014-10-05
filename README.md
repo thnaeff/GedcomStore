@@ -189,7 +189,7 @@ More examples can be found in the [test directory](src/ch/thn/gedcom/test/)
 
 
 # Dependencies
-* [Joda-Time](http://http://www.joda.org)
+* [Joda-Time](http://www.joda.org)
 * My own utility library: [Util](http://github.com/thnaeff/Util)
 
 
