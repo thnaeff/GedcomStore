@@ -17,26 +17,25 @@
 package ch.thn.gedcom.printer;
 
 
-import ch.thn.gedcom.data.GedcomLine;
 import ch.thn.gedcom.data.GedcomNode;
-import ch.thn.util.tree.printer.text.DebugTextTreePrinter;
+import ch.thn.util.tree.printer.TreeNodeDebugPrinter;
 
 /**
- * A printer which is very useful for debugging a gedcom tree when building it. It 
- * prints the whole tree with lines connecting the nodes and additional information 
+ * A printer which is very useful for debugging a gedcom tree when building it. It
+ * prints the whole tree with lines connecting the nodes and additional information
  * like the line index and child index.
  * 
  * @author Thomas Naeff (github.com/thnaeff)
  * 
  */
-public class GedcomStructureTreePrinter extends DebugTextTreePrinter<GedcomLine, GedcomNode> {
-	
-	
-	
+public class GedcomStructureTreePrinter extends TreeNodeDebugPrinter<GedcomNode> {
+
+
+
 	@Override
 	public StringBuilder print(GedcomNode printNode) {
 		return super.print(printNode);
 	}
-	
-	
+
+
 }

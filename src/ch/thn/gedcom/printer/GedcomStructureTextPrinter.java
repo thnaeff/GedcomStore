@@ -16,24 +16,25 @@
  */
 package ch.thn.gedcom.printer;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 
-import ch.thn.gedcom.data.GedcomLine;
 import ch.thn.gedcom.data.GedcomNode;
 import ch.thn.util.tree.onoff.OnOffTreeUtil;
-import ch.thn.util.tree.printer.text.LeftRightTextTreePrinter;
-import ch.thn.util.tree.printer.text.TextTreePrinterLines;
+import ch.thn.util.tree.printer.TreeNodePlainTextPrinter;
 
 /**
- * A printer which prints the gedcom structure in text format. The output 
- * of this printer can be saved in a gedcom textfile to import the gedcom data 
+ * A printer which prints the gedcom structure in text format. The output
+ * of this printer can be saved in a gedcom textfile to import the gedcom data
  * into a software which supports the gedcom standard.
  * 
  * @author Thomas Naeff (github.com/thnaeff)
  *
  */
-public class GedcomStructureTextPrinter extends LeftRightTextTreePrinter<GedcomLine, GedcomNode> {
-	
+public class GedcomStructureTextPrinter extends TreeNodePlainTextPrinter<GedcomNode> {
+
 	/**
 	 * Prints the gedcom structure
 	 * 
@@ -41,62 +42,65 @@ public class GedcomStructureTextPrinter extends LeftRightTextTreePrinter<GedcomL
 	public GedcomStructureTextPrinter() {
 		this(true);
 	}
-	
-	
+
+
 	/**
 	 * 
 	 * 
-	 * @param flatStructure If set to <code>true</code>, there is no indentation 
+	 * @param flatStructure If set to <code>true</code>, there is no indentation
 	 * for the output and all lines are printed all the way on the left.
 	 */
 	public GedcomStructureTextPrinter(boolean flatStructure) {
 		super();
-		
+
 		if (flatStructure) {
-			HEAD = "";
-			FIRST_CHILD = "";
-			START = "";
-			END = "";
-			INTERMEDIATE = "";
-			THROUGH = "";
-			AFTEREND = "";
-			ADDITIONALLINETHROUGH = "";
-			ADDITIONALLINEAFTEREND = "";
+			HEAD = null;
+			LEFT_SPACE = null;
+			FIRST_CHILD = null;
+			LAST_NODE = null;
+			THROUGH = null;
+			AFTEREND = null;
+			ADDITIONALLINE_THROUGH = null;
+			ADDITIONALLINE_AFTEREND = null;
+			ADDITIONALLINE_CONNECTFIRST = null;
+			ADDITIONALLINE_CONNECTFIRSTNOCHILD = null;
 		} else {
-			HEAD = "";
-			FIRST_CHILD = "";
-			START = "  ";
-			END = "  ";
-			INTERMEDIATE = "  ";
+			HEAD = null;
+			LEFT_SPACE = null;
+			FIRST_CHILD = "  ";
+			LAST_NODE = "  ";
 			THROUGH = "  ";
 			AFTEREND = "  ";
-			ADDITIONALLINETHROUGH = "  ";
-			ADDITIONALLINEAFTEREND = "  ";
+			ADDITIONALLINE_THROUGH = "  ";
+			ADDITIONALLINE_AFTEREND = "  ";
+			ADDITIONALLINE_CONNECTFIRST = " ";
+			ADDITIONALLINE_CONNECTFIRSTNOCHILD = " ";
 		}
-		
+
+
+
 	}
-	
+
 
 	@Override
-	protected TextTreePrinterLines getNodeData(GedcomNode node) {
-		TextTreePrinterLines lines = new TextTreePrinterLines();
-		
+	protected Collection<String> getNodeValues(GedcomNode node) {
+		List<String> values = new ArrayList<>();
+
 		if (node.getNodeValue() != null) {
-			int index = lines.addNewLine();
-			lines.addValue(index, node.getNodeDepth() + " ");
-			lines.addValue(index, node.getNodeValue().toString());
+			values.add(node.getNodeDepth() + " " + node.getNodeValue().toString());
 		}
-		
-		return lines;
+
+
+		return values;
 	}
-	
+
 	@Override
 	public StringBuilder print(GedcomNode printNode) {
 		LinkedList<GedcomNode> trees = OnOffTreeUtil.convertToSimpleTree(printNode, true, true);
-		//There is only one tree since only the structure name is ignored and it 
+		//There is only one tree since only the structure name is ignored and it
 		//continues with the first tag line which is not ignored
 		return super.print(trees.get(0));
 	}
-	
-	
+
+
 }

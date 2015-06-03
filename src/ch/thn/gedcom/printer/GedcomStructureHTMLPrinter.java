@@ -16,69 +16,70 @@
  */
 package ch.thn.gedcom.printer;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 
-import ch.thn.gedcom.data.GedcomLine;
 import ch.thn.gedcom.data.GedcomNode;
 import ch.thn.util.tree.onoff.OnOffTreeUtil;
-import ch.thn.util.tree.printer.html.HTMLTreePrinter;
-import ch.thn.util.tree.printer.text.TextTreePrinterLines;
+import ch.thn.util.tree.printer.TreeNodeHTMLPrinter;
 /**
- * This gedcom data printer prints the HTML code to view the gedcom structure 
+ * This gedcom data printer prints the HTML code to view the gedcom structure
  * as HTML file, for example in a web browser.
  * 
  * @author Thomas Naeff (github.com/thnaeff)
  *
  */
-public class GedcomStructureHTMLPrinter extends HTMLTreePrinter<GedcomLine, GedcomNode> {
+public class GedcomStructureHTMLPrinter extends TreeNodeHTMLPrinter<GedcomNode> {
 
-	
+
+	private static final String HTMLSPACE = "&nbsp;";
+
 	/**
 	 * 
 	 * 
-	 * @param printerMode
 	 * @param useColors
+	 * @param showLines
 	 */
-	public GedcomStructureHTMLPrinter(LeftRightTextPrinterMode printerMode, 
-			boolean useColors, boolean showLines) {
-		super(printerMode, false, useColors);
-		
+	public GedcomStructureHTMLPrinter(boolean useColors, boolean showLines) {
+		super(false, useColors);
+
 		if (!showLines) {
 			HEAD = null;
-			FIRST_CHILD = null;
-			START = HTMLSPACE + HTMLSPACE + HTMLSPACE;
-			END = HTMLSPACE + HTMLSPACE + HTMLSPACE;
-			INTERMEDIATE = HTMLSPACE + HTMLSPACE + HTMLSPACE;
-			THROUGH = HTMLSPACE + HTMLSPACE;
+			LEFT_SPACE = null;
+			FIRST_CHILD = HTMLSPACE + HTMLSPACE + HTMLSPACE;
+			LAST_NODE = HTMLSPACE + HTMLSPACE + HTMLSPACE;
+			THROUGH = HTMLSPACE + HTMLSPACE + HTMLSPACE;
 			AFTEREND = "";
-			ADDITIONALLINETHROUGH = HTMLSPACE + HTMLSPACE;
-			ADDITIONALLINEAFTEREND = null;
+			ADDITIONALLINE_THROUGH = HTMLSPACE + HTMLSPACE + HTMLSPACE;
+			ADDITIONALLINE_AFTEREND = null;
+			ADDITIONALLINE_CONNECTFIRST = null;
+			ADDITIONALLINE_CONNECTFIRSTNOCHILD = null;
 		}
-				
+
 	}
-	
-	
+
 
 	@Override
-	protected TextTreePrinterLines getNodeData(GedcomNode node) {
-		TextTreePrinterLines lines = new TextTreePrinterLines();
-		
+	protected Collection<String> getNodeValues(GedcomNode node) {
+		List<String> values = new ArrayList<>();
+
 		if (node.getNodeValue() != null) {
-			int index = lines.addNewLine();
-			lines.addValue(index, node.getNodeDepth() + HTMLSPACE + HTMLSPACE);
-			lines.addValue(index, node.getNodeValue().toString());
+			values.add(node.getNodeDepth() + HTMLSPACE + HTMLSPACE + node.getNodeValue().toString());
 		}
-		
-		return lines;
+
+
+		return values;
 	}
-	
+
 	@Override
 	public StringBuilder print(GedcomNode printNode) {
 		LinkedList<GedcomNode> trees = OnOffTreeUtil.convertToSimpleTree(printNode, true, true);
-		//There is only one tree since only the structure name is ignored and it 
+		//There is only one tree since only the structure name is ignored and it
 		//continues with the first tag line which is not ignored
 		return super.print(trees.get(0));
 	}
 
-	
+
 }
