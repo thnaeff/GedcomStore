@@ -14,7 +14,7 @@
  * limitations under the License.
  * 
  */
-package ch.thn.gedcom.test;
+package ch.thn.gedcom.store;
 
 import java.util.regex.Pattern;
 
@@ -26,7 +26,7 @@ import ch.thn.gedcom.data.GedcomTagLine;
  * @author Thomas Naeff (github.com/thnaeff)
  *
  */
-public class GedcomDataValidatorTest extends GedcomDataValidator {
+public class TestGedcomDataValidator extends GedcomDataValidator {
 	
 	public static final Pattern pattern = Pattern.compile("^[A-Za-z0-9_ ]*$");
 

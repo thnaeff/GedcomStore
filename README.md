@@ -1,10 +1,19 @@
 # GedcomStore
 **A library to load the GEDCOM structure definitions (from a [lineage-linked grammar file](http://homepages.rootsweb.ancestry.com/~pmcbride/gedcom/55gcch2.htm)) into memory and build a valid [GEDCOM](http://en.wikipedia.org/wiki/GEDCOM)-structure according to the parsed definitions**
 
+---
+
+
+[![License](http://img.shields.io/badge/License-Apache v2.0-802879.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
+[![Java Version](http://img.shields.io/badge/Java-1.6%2B-2E6CB8.svg)](https://java.com)
+[![Apache Maven ready](http://img.shields.io/badge/Apache Maven ready-3.3.9%2B-FF6804.svg)](https://maven.apache.org/)
+
+
+---
+
 GedcomStore is a library written in Java to parse lineage-linked grammar from a text file. The lineage-linked grammar defines the structure of a GEDCOM. Through GedcomStore, those structures can then be retrieved as Java objects in order to create a valid GEDCOM ouput.
 Since the structures are created according to the grammar file, the output does not have to be validated against the GEDCOM structure - only valid ouput which matches the given grammar file can be created. However, the values itself are not validated automatically but validators can be implemented (see "Not yet implemented").
 
-Download the library [Version 0.2 as .jar file here](GedcomStore_0.2.jar?raw=true).
 
 
 ## Key features
@@ -188,8 +197,27 @@ More examples can be found in the [test directory](src/ch/thn/gedcom/test/)
 ********************************************************************************************************
 
 
-# Dependencies
-* [Joda-Time](http://www.joda.org)
-* My own utility library: [Util](http://github.com/thnaeff/Util)
+---
+
+
+<img src="http://maven.apache.org/images/maven-logo-black-on-white.png" alt="Built with Maven" width="150">
+
+This project can be built with Maven
+
+Maven command:
+```
+$ mvn clean install
+```
+
+pom.xml entry in your project:
+```
+<dependency>
+	<groupId>ch.thn.gedcom</groupId>
+	<artifactId>gedcomstore</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+</dependency>
+```
+
+---
 
 

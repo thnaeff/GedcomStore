@@ -1,0 +1,18 @@
+line: A line is one single line in the lineage-linked grammar. A line can consist of multiple parts like the line level number, the tag, a value or value ID and the value range
+
+line ID: A tag or structure name. A line ID identifies a line in a structure.
+
+line level: The line level describes the hierarchy of a structure. 
+
+value range: 
+
+tag name: 
+
+structure name: 
+
+block: 
+
+structure: 
+
+structure variations: A structure can have multiple variations. The FAMILY_EVENT_STRUCTURE for example has the variations [ANUL|CENS|DIV|DIVF], [ENGA|MARB|MARC], [MARR] etc.
+
